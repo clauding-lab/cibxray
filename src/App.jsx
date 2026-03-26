@@ -805,7 +805,7 @@ export default function App() {
                                 <td style={{ padding: "7px 5px", fontFamily: "monospace" }}>{noBorrower ? "—" : fmt(s.agg.tOut)}</td>
                                 <td style={{ padding: "7px 5px", fontFamily: "monospace", color: s.agg.tOver > 0 ? "#dc2626" : "#059669" }}>{noBorrower ? "—" : fmt(s.agg.tOver)}</td>
                                 <td style={{ padding: "7px 5px", fontWeight: 700, color: b2.color }}>{noBorrower ? "—" : s.total}</td>
-                                <td style={{ padding: "7px 5px", fontSize: 10, fontWeight: 600, color: b2.color }}>{noBorrower ? "CLEAN" : b2.label}</td>
+                                <td style={{ padding: "7px 5px", fontSize: 10, fontWeight: 600, color: b2.color }}>{noBorrower ? "MODERATE (Clean)" : b2.label}</td>
                                 <td style={{ padding: "7px 5px" }}><span onClick={e => { e.stopPropagation(); doExport([r], "individual"); }} style={{ fontSize: 10, color: "#3b82f6", cursor: "pointer", fontWeight: 600 }}>xlsx</span></td>
                               </tr>
                             );
