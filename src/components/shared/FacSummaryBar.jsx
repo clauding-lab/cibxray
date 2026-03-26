@@ -28,8 +28,8 @@ export default function FacSummaryBar({ facs }) {
   const td = { fontSize: 12, fontWeight: 600, padding: "8px 8px", borderBottom: "1px solid #f1f5f9" };
 
   return (
-    <div style={{ background: "#fff", borderRadius: 8, marginBottom: 14, border: "1px solid #e2e8f0", overflow: "hidden" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+    <div style={{ background: "#fff", borderRadius: 8, marginBottom: 14, border: "1px solid #e2e8f0", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 600 }}>
         <thead>
           <tr>{["Status", "Count", "Limit", "Outstanding", "Overdue", "Utilization", "Worst Class."].map(h => <th key={h} style={hd}>{h}</th>)}</tr>
         </thead>

@@ -114,8 +114,8 @@ export default function RepaymentChart({ facs, title }) {
         <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: 4, background: "#d97706", display: "inline-block" }} /> Classification status (dot color)</span>
       </div>
 
-      <div style={{ position: "relative" }}>
-        <svg width={W} height={H} viewBox={"0 0 " + W + " " + H} style={{ display: "block", overflow: "visible" }}
+      <div style={{ position: "relative", width: "100%", overflowX: "auto" }}>
+        <svg width="100%" height={H} viewBox={"0 0 " + W + " " + H} preserveAspectRatio="xMinYMid meet" style={{ display: "block", overflow: "visible", minWidth: 400 }}
           onMouseLeave={() => setHover(null)}>
           {yTicks.map((t, i) => (
             <g key={i}>
@@ -149,7 +149,9 @@ export default function RepaymentChart({ facs, title }) {
 
         {hd && hover !== null && (
           <div style={{
-            position: "absolute", left: Math.min(x(hover) + 12, W - 200), top: Math.max(y(hd.outstanding) - 80, 0),
+            position: "absolute",
+            left: ((Math.min(x(hover) + 12, W - 200)) / W * 100) + "%",
+            top: ((Math.max(y(hd.outstanding) - 80, 0)) / H * 100) + "%",
             background: "#0f172a", color: "#fff", borderRadius: 8, padding: "10px 14px",
             fontSize: 11, lineHeight: 1.7, pointerEvents: "none", zIndex: 10,
             boxShadow: "0 4px 12px rgba(0,0,0,0.2)", minWidth: 170,

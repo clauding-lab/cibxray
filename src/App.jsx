@@ -399,8 +399,8 @@ export default function App() {
                 {tab === "borrower" && (
                   <div>
                     <FacSummaryBar facs={borrowerFacs} />
-                    <RepaymentChart facs={borrowerFacs.filter(f => f.nature === "Funded")} title="Funded Facilities \u2014 Repayment Timeline" />
-                    <RepaymentChart facs={borrowerFacs.filter(f => f.nature === "Non-Funded")} title="Non-Funded Facilities \u2014 Exposure Timeline" />
+                    <RepaymentChart facs={borrowerFacs.filter(f => f.nature === "Funded")} title="Funded Facilities — Repayment Timeline" />
+                    <RepaymentChart facs={borrowerFacs.filter(f => f.nature === "Non-Funded")} title="Non-Funded Facilities — Exposure Timeline" />
                     {(() => {
                       const liveBorrower = borrowerFacs.filter(f => f.status === "Live");
                       const termBorrower = borrowerFacs.filter(f => f.status !== "Live");
@@ -426,8 +426,8 @@ export default function App() {
                     {guarantorFacs.length > 0 ? (
                       <>
                         <FacSummaryBar facs={guarantorFacs} />
-                        <RepaymentChart facs={guarantorFacs.filter(f => f.nature === "Funded")} title="Funded Facilities \u2014 Repayment Timeline" />
-                        <RepaymentChart facs={guarantorFacs.filter(f => f.nature === "Non-Funded")} title="Non-Funded Facilities \u2014 Exposure Timeline" />
+                        <RepaymentChart facs={guarantorFacs.filter(f => f.nature === "Funded")} title="Funded Facilities — Repayment Timeline" />
+                        <RepaymentChart facs={guarantorFacs.filter(f => f.nature === "Non-Funded")} title="Non-Funded Facilities — Exposure Timeline" />
                         {(() => {
                           const liveG = guarantorFacs.filter(f => f.status === "Live");
                           const termG = guarantorFacs.filter(f => f.status !== "Live");
