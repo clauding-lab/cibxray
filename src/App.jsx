@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { CLS } from './constants/classifications';
 import { BANDS, getBand } from './constants/bands';
 import { S } from './constants/theme';
@@ -22,9 +22,22 @@ export default function App() {
   const [processing, setProcessing] = useState(false);
   const [fileLog, setFileLog] = useState([]);
   const [dragOver, setDragOver] = useState(false);
-  const [sideOpen, setSideOpen] = useState(true);
+  const [sideOpen, setSideOpen] = useState(window.innerWidth > 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const fileRef = useRef();
   const counter = useRef(0);
+
+  useEffect(() => {
+    const onResize = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      if (mobile) setSideOpen(false);
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  const sideW = isMobile ? 200 : 250;
 
   const groups = useMemo(() => {
     const g = {};
@@ -46,6 +59,11 @@ export default function App() {
   }, [activeId, groups]);
 
   const scActive = useMemo(() => active ? calcScore(getBorrowerFacs(active)) : null, [active]);
+
+  const navTo = (v, id, t) => {
+    setView(v); setActiveId(id); if (t) setTab(t);
+    if (isMobile) setSideOpen(false);
+  };
 
   const TABS = [
     { key: "summary", label: "Summary & Rating" },
@@ -111,6 +129,7 @@ export default function App() {
 
     if (newReports.length) {
       setReports(p => [...p, ...newReports]);
+      setSideOpen(false);
       if (newReports.length === 1 && nonPdfs.length === 0 && pdfs.length === 1) {
         setActiveId(newReports[0].reportNo); setView("report"); setTab("summary");
       } else {
@@ -149,14 +168,16 @@ export default function App() {
 
       <div style={{ display: "flex", minHeight: "calc(100vh - 52px)" }}>
         {/* SIDEBAR */}
-        <div style={{ width: sideOpen ? 250 : 0, minWidth: sideOpen ? 250 : 0, background: "#0b1628", borderRight: sideOpen ? "1px solid #1e3a5f" : "none", flexShrink: 0, overflow: "hidden", transition: "width 0.2s, min-width 0.2s" }}>
-          <div style={{ width: 250, overflow: "auto", height: "100%" }}>
+        {/* Mobile overlay backdrop */}
+        {isMobile && sideOpen && <div onClick={() => setSideOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 40 }} />}
+        <div style={{ width: sideOpen ? sideW : 0, minWidth: sideOpen ? sideW : 0, background: "#0b1628", borderRight: sideOpen ? "1px solid #1e3a5f" : "none", flexShrink: 0, overflow: "hidden", transition: "width 0.2s, min-width 0.2s", ...(isMobile && sideOpen ? { position: "fixed", top: 52, left: 0, bottom: 0, zIndex: 50 } : {}) }}>
+          <div style={{ width: sideW, overflow: "auto", height: "100%" }}>
             <div style={{ padding: "10px 12px", borderBottom: "1px solid #1e3a5f", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ fontSize: 11, fontWeight: 600, color: "#7dd3fc", letterSpacing: 1 }}>REPORTS</span>
               <button onClick={() => { setView("upload"); setActiveId(null); }} style={{ background: "rgba(14,165,233,0.15)", color: "#7dd3fc", border: "1px solid rgba(56,189,248,0.25)", padding: "3px 10px", borderRadius: 5, fontSize: 11, fontWeight: 500, cursor: "pointer" }}>+ Upload</button>
             </div>
             {(reports.length > 0 || fileLog.length > 0) && (
-              <div onClick={() => { setView("batch"); setActiveId("batch"); }} style={{ padding: "9px 12px", cursor: "pointer", background: view === "batch" ? "rgba(14,165,233,0.1)" : "transparent", borderLeft: view === "batch" ? "3px solid #0ea5e9" : "3px solid transparent", borderBottom: "1px solid #1e3a5f" }}>
+              <div onClick={() => navTo("batch", "batch")} style={{ padding: "9px 12px", cursor: "pointer", background: view === "batch" ? "rgba(14,165,233,0.1)" : "transparent", borderLeft: view === "batch" ? "3px solid #0ea5e9" : "3px solid transparent", borderBottom: "1px solid #1e3a5f" }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: "#e0f2fe" }}>All Reports ({reports.length})</div>
                 <div style={{ fontSize: 10, color: "#64748b" }}>{fileLog.length} files uploaded{fileLog.filter(f => f.status === "failed").length > 0 ? " \u00B7 " + fileLog.filter(f => f.status === "failed").length + " failed" : ""}</div>
               </div>
@@ -167,7 +188,7 @@ export default function App() {
               const isA = activeId === "linked:" + g.key;
               return (
                 <div key={g.key}>
-                  <div onClick={() => { setView("grp"); setActiveId("linked:" + g.key); }} style={{ padding: "9px 12px", cursor: "pointer", background: isA ? "rgba(14,165,233,0.1)" : "transparent", borderLeft: isA ? "3px solid " + gb.color : "3px solid transparent", borderBottom: "1px solid #152238" }}>
+                  <div onClick={() => navTo("grp", "linked:" + g.key)} style={{ padding: "9px 12px", cursor: "pointer", background: isA ? "rgba(14,165,233,0.1)" : "transparent", borderLeft: isA ? "3px solid " + gb.color : "3px solid transparent", borderBottom: "1px solid #152238" }}>
                     <div style={{ display: "flex", justifyContent: "space-between" }}>
                       <div style={{ fontSize: 11, fontWeight: 600, color: "#e0f2fe", maxWidth: 150, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.name || "Group"}</div>
                       <span style={{ fontSize: 13, fontWeight: 700, color: gb.color }}>{gs.total}</span>
@@ -177,7 +198,7 @@ export default function App() {
                   {g.reports.map(r => {
                     const rs = calcScore(getBorrowerFacs(r)); const rb = getBand(rs.total, rs.override);
                     return (
-                      <div key={r.reportNo} onClick={() => { setView("report"); setActiveId(r.reportNo); setTab("summary"); }} style={{ padding: "7px 12px 7px 26px", cursor: "pointer", background: activeId === r.reportNo ? "rgba(14,165,233,0.08)" : "transparent", borderLeft: activeId === r.reportNo ? "3px solid " + rb.color : "3px solid transparent", borderBottom: "1px solid #0f1d32" }}>
+                      <div key={r.reportNo} onClick={() => navTo("report", r.reportNo, "summary")} style={{ padding: "7px 12px 7px 26px", cursor: "pointer", background: activeId === r.reportNo ? "rgba(14,165,233,0.08)" : "transparent", borderLeft: activeId === r.reportNo ? "3px solid " + rb.color : "3px solid transparent", borderBottom: "1px solid #0f1d32" }}>
                         <div style={{ display: "flex", justifyContent: "space-between" }}>
                           <span style={{ fontSize: 10.5, fontWeight: 500, color: "#94a3b8" }}>{r.reportNo}</span>
                           <span style={{ fontSize: 12, fontWeight: 700, color: rb.color }}>{rs.total}</span>
@@ -191,7 +212,7 @@ export default function App() {
             {reports.filter(r => { const k = r.subject.nid || r.subject.regNo || ""; return !k || !groups.find(g => g.key === k); }).map(r => {
               const rs = calcScore(getBorrowerFacs(r)); const rb = getBand(rs.total, rs.override);
               return (
-                <div key={r.reportNo} onClick={() => { setView("report"); setActiveId(r.reportNo); setTab("summary"); }} style={{ padding: "9px 12px", cursor: "pointer", background: activeId === r.reportNo ? "rgba(14,165,233,0.1)" : "transparent", borderLeft: activeId === r.reportNo ? "3px solid " + rb.color : "3px solid transparent", borderBottom: "1px solid #152238" }}>
+                <div key={r.reportNo} onClick={() => navTo("report", r.reportNo, "summary")} style={{ padding: "9px 12px", cursor: "pointer", background: activeId === r.reportNo ? "rgba(14,165,233,0.1)" : "transparent", borderLeft: activeId === r.reportNo ? "3px solid " + rb.color : "3px solid transparent", borderBottom: "1px solid #152238" }}>
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
                     <div style={{ fontSize: 11, fontWeight: 600, color: "#e0f2fe", maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.subject.displayName || r.reportNo}</div>
                     <span style={{ fontSize: 13, fontWeight: 700, color: rb.color }}>{rs.total}</span>
