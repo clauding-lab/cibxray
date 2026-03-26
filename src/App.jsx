@@ -769,7 +769,7 @@ export default function App() {
                 <>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 8, marginBottom: 12 }}>
                     {BANDS.map(band => {
-                      const count = reports.filter(r => { const s = calcScore(getBorrowerFacs(r)); return getBand(s.total, s.override).key === band.key; }).length;
+                      const count = reports.filter(r => { const bf = getBorrowerFacs(r); if (bf.length === 0) return band.key === "MODERATE"; const s = calcScore(bf); return getBand(s.total, s.override).key === band.key; }).length;
                       return (
                         <div key={band.key} style={{ background: band.bg, borderRadius: 8, padding: 12, border: "1px solid " + band.color + "22", textAlign: "center" }}>
                           <div style={{ fontSize: 22, fontWeight: 700, color: band.color }}>{count}</div>
@@ -790,19 +790,22 @@ export default function App() {
                         </tr></thead>
                         <tbody>
                           {reports.map(r => {
-                            const s = calcScore(getBorrowerFacs(r)); const b2 = getBand(s.total, s.override);
+                            const bFacs = getBorrowerFacs(r);
+                            const s = calcScore(bFacs);
+                            const noBorrower = bFacs.length === 0;
+                            const b2 = noBorrower ? BANDS.find(b3 => b3.key === "MODERATE") : getBand(s.total, s.override);
                             return (
                               <tr key={r.reportNo} style={{ borderBottom: "1px solid #f1f5f9", cursor: "pointer" }} onClick={() => { setView("report"); setActiveId(r.reportNo); setTab("summary"); }}>
                                 <td style={{ padding: "7px 5px", fontWeight: 600, color: "#0ea5e9" }}>{r.reportNo}</td>
                                 <td style={{ padding: "7px 5px", fontWeight: 500, maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#0ea5e9" }}>{r.subject.displayName || "-"}</td>
                                 <td style={{ padding: "7px 5px", fontSize: 10.5 }}>{r.subject.subjectType}</td>
                                 <td style={{ padding: "7px 5px", fontFamily: "monospace", fontSize: 10.5 }}>{(r.subject.nid || r.subject.regNo || "-").slice(0, 18)}</td>
-                                <td style={{ padding: "7px 5px" }}>{s.agg.total}</td>
-                                <td style={{ padding: "7px 5px", fontFamily: "monospace" }}>{fmt(s.agg.tLim)}</td>
-                                <td style={{ padding: "7px 5px", fontFamily: "monospace" }}>{fmt(s.agg.tOut)}</td>
-                                <td style={{ padding: "7px 5px", fontFamily: "monospace", color: s.agg.tOver > 0 ? "#dc2626" : "#059669" }}>{fmt(s.agg.tOver)}</td>
-                                <td style={{ padding: "7px 5px", fontWeight: 700, color: b2.color }}>{s.total}</td>
-                                <td style={{ padding: "7px 5px", fontSize: 10, fontWeight: 600, color: b2.color }}>{b2.label}</td>
+                                <td style={{ padding: "7px 5px" }}>{noBorrower ? "—" : s.agg.total}</td>
+                                <td style={{ padding: "7px 5px", fontFamily: "monospace" }}>{noBorrower ? "—" : fmt(s.agg.tLim)}</td>
+                                <td style={{ padding: "7px 5px", fontFamily: "monospace" }}>{noBorrower ? "—" : fmt(s.agg.tOut)}</td>
+                                <td style={{ padding: "7px 5px", fontFamily: "monospace", color: s.agg.tOver > 0 ? "#dc2626" : "#059669" }}>{noBorrower ? "—" : fmt(s.agg.tOver)}</td>
+                                <td style={{ padding: "7px 5px", fontWeight: 700, color: b2.color }}>{noBorrower ? "—" : s.total}</td>
+                                <td style={{ padding: "7px 5px", fontSize: 10, fontWeight: 600, color: b2.color }}>{noBorrower ? "CLEAN" : b2.label}</td>
                                 <td style={{ padding: "7px 5px" }}><span onClick={e => { e.stopPropagation(); doExport([r], "individual"); }} style={{ fontSize: 10, color: "#3b82f6", cursor: "pointer", fontWeight: 600 }}>xlsx</span></td>
                               </tr>
                             );
