@@ -282,7 +282,7 @@ export default function App() {
                 </div>
 
                 {/* Tab bar */}
-                <div style={{ display: "flex", gap: 1, borderBottom: "1px solid #e2e8f0", marginBottom: 16, overflowX: "auto" }}>
+                <div style={{ display: "flex", gap: 1, borderBottom: "1px solid #e2e8f0", marginBottom: 16, overflowX: "auto", overflowY: "hidden", minHeight: 38 }}>
                   {TABS.map(t => {
                     const count = t.key === "borrower" ? borrowerFacs.length : t.key === "guarantor" ? guarantorFacs.length : t.key === "linked" ? active.relatedConcerns.length : t.key === "redflags" ? redFlagCount : null;
                     const isRedFlag = t.key === "redflags" && redFlagCount > 0;
