@@ -211,17 +211,18 @@ export default function App() {
             })}
             {reports.filter(r => { const k = r.subject.nid || r.subject.regNo || ""; return !k || !groups.find(g => g.key === k); }).map(r => {
               const rs = calcScore(getBorrowerFacs(r)); const rb = getBand(rs.total, rs.override);
-              const isClean = r.facilities.length === 0;
+              const noBorrowerFacs = getBorrowerFacs(r).length === 0;
+              const sideColor = noBorrowerFacs ? "#0284c7" : rb.color;
               return (
-                <div key={r.reportNo} onClick={() => navTo("report", r.reportNo, "summary")} style={{ padding: "9px 12px", cursor: "pointer", background: activeId === r.reportNo ? "rgba(14,165,233,0.1)" : "transparent", borderLeft: activeId === r.reportNo ? "3px solid " + (isClean ? "#22c55e" : rb.color) : "3px solid transparent", borderBottom: "1px solid #152238" }}>
+                <div key={r.reportNo} onClick={() => navTo("report", r.reportNo, "summary")} style={{ padding: "9px 12px", cursor: "pointer", background: activeId === r.reportNo ? "rgba(14,165,233,0.1)" : "transparent", borderLeft: activeId === r.reportNo ? "3px solid " + sideColor : "3px solid transparent", borderBottom: "1px solid #152238" }}>
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
                     <div style={{ fontSize: 11, fontWeight: 600, color: "#e0f2fe", maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.subject.displayName || r.reportNo}</div>
-                    {isClean
-                      ? <span style={{ fontSize: 9, fontWeight: 700, color: "#22c55e", background: "rgba(34,197,94,0.15)", padding: "1px 6px", borderRadius: 4 }}>CLEAN</span>
+                    {noBorrowerFacs
+                      ? <span style={{ fontSize: 9, fontWeight: 700, color: "#0284c7", background: "rgba(2,132,199,0.15)", padding: "1px 6px", borderRadius: 4 }}>CLEAN</span>
                       : <span style={{ fontSize: 13, fontWeight: 700, color: rb.color }}>{rs.total}</span>
                     }
                   </div>
-                  <div style={{ fontSize: 10, color: "#64748b" }}>{r.reportNo} | {r.subject.subjectType}{isClean ? " | No credit history" : ""}</div>
+                  <div style={{ fontSize: 10, color: "#64748b" }}>{r.reportNo} | {r.subject.subjectType}{noBorrowerFacs ? " | No borrower history" : ""}</div>
                 </div>
               );
             })}
@@ -310,28 +311,38 @@ export default function App() {
                 {/* SUMMARY TAB */}
                 {tab === "summary" && (
                   <div>
-                    {/* Clean CIB banner — no facilities at all */}
-                    {active.facilities.length === 0 && (
-                      <div style={{ ...S.card, background: "linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%)", border: "1px solid #86efac", textAlign: "center", padding: "28px 20px", marginBottom: 12 }}>
-                        <div style={{ fontSize: 36, marginBottom: 8 }}>{"\u2705"}</div>
-                        <div style={{ fontSize: 16, fontWeight: 700, color: "#166534", marginBottom: 4 }}>Clean CIB — No Credit History</div>
-                        <p style={{ fontSize: 12.5, color: "#15803d", margin: 0, lineHeight: 1.5 }}>
-                          This subject has no existing credit facilities with any financial institution.<br/>
-                          No borrowing, guarantor, or credit card records found in the CIB database.
-                        </p>
-                        {active.summary?.reportingInstitutes === 0 && (
-                          <div style={{ marginTop: 10, display: "inline-flex", gap: 16, fontSize: 11, color: "#166534" }}>
-                            <span>Reporting Institutes: <b>0</b></span>
-                            <span>Living Contracts: <b>0</b></span>
-                            <span>Outstanding: <b>৳0</b></span>
-                            <span>Overdue: <b>৳0</b></span>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                    {/* Clean CIB banners — moderate risk */}
+                    {(() => {
+                      const noBorrower = borrowerFacs.length === 0;
+                      const noFacilities = active.facilities.length === 0;
+                      if (!noBorrower) return null;
+                      const modBand = BANDS.find(b2 => b2.key === "MODERATE");
+                      const title = noFacilities
+                        ? "Clean CIB \u2014 No Credit History as Borrower or Guarantor"
+                        : "Clean CIB \u2014 No Credit History as Borrower";
+                      const desc = noFacilities
+                        ? "This subject has no existing credit facilities with any financial institution. No borrowing, guarantor, or credit card records found in the CIB database."
+                        : "This subject has no borrower facilities. Only guarantor exposures exist (" + guarantorFacs.length + " facility" + (guarantorFacs.length !== 1 ? "ies" : "") + ").";
+                      return (
+                        <div style={{ ...S.card, background: modBand.bg, border: "1px solid " + modBand.color + "33", textAlign: "center", padding: "28px 20px", marginBottom: 12 }}>
+                          <div style={{ fontSize: 36, marginBottom: 8 }}>{"\u26A0\uFE0F"}</div>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: modBand.color, marginBottom: 4 }}>{title}</div>
+                          <div style={{ display: "inline-block", background: modBand.color + "18", border: "1px solid " + modBand.color + "30", borderRadius: 6, padding: "4px 14px", fontSize: 12, fontWeight: 700, color: modBand.color, marginBottom: 8 }}>MODERATE RISK</div>
+                          <p style={{ fontSize: 12.5, color: "#334155", margin: 0, lineHeight: 1.5 }}>{desc}</p>
+                          {noFacilities && active.summary?.reportingInstitutes === 0 && (
+                            <div style={{ marginTop: 10, display: "inline-flex", gap: 16, fontSize: 11, color: "#475569", flexWrap: "wrap", justifyContent: "center" }}>
+                              <span>Reporting Institutes: <b>0</b></span>
+                              <span>Living Contracts: <b>0</b></span>
+                              <span>Outstanding: <b>৳0</b></span>
+                              <span>Overdue: <b>৳0</b></span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
 
-                    {/* Score card — only show if there are facilities */}
-                    {active.facilities.length > 0 && (
+                    {/* Score card — only show if there are borrower facilities */}
+                    {borrowerFacs.length > 0 && (
                     <div style={{ ...S.card, display: "flex", alignItems: "center", gap: 18, background: b.bg, border: "1px solid " + b.color + "22" }}>
                       <Gauge score={scActive.total} override={scActive.override} />
                       <div style={{ flex: 1 }}>
@@ -342,7 +353,7 @@ export default function App() {
                     </div>
                     )}
 
-                    {active.facilities.length > 0 && (
+                    {borrowerFacs.length > 0 && (
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 8, marginBottom: 12 }}>
                       {[["Live Facs", scActive.agg.live], ["Total Limit", "\u09F3" + fmt(scActive.agg.tLim)], ["Outstanding", "\u09F3" + fmt(scActive.agg.tOut)], ["Overdue", "\u09F3" + fmt(scActive.agg.tOver)], ["Utilization", (scActive.agg.util * 100).toFixed(0) + "%"]].map(([l, v], idx) => (
                         <div key={l} style={{ background: "#fff", borderRadius: 8, padding: "10px 12px", border: "1px solid #e2e8f0" }}>
@@ -388,8 +399,8 @@ export default function App() {
                       </div>
                     </div>
 
-                    {/* Score breakdown + flags — only with facilities */}
-                    {active.facilities.length > 0 && (
+                    {/* Score breakdown + flags — only with borrower facilities */}
+                    {borrowerFacs.length > 0 && (
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                       <div style={S.card}>
                         <div style={S.sec}>Score Breakdown (3-Factor + Penalty)</div>
