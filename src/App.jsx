@@ -710,7 +710,7 @@ export default function App() {
                                 <span style={{ cursor: "pointer", color: "#0ea5e9" }} onClick={() => { const r = reports.find(r => r.reportNo === entry.reportNo); if (r) { setView("report"); setActiveId(r.reportNo); setTab("summary"); } }}>{entry.reportNo}</span>
                               ) : "\u2014"}
                             </td>
-                            <td style={{ padding: "6px 5px", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.name || "\u2014"}</td>
+                            <td style={{ padding: "6px 5px", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.status === "success" ? <span style={{ cursor: "pointer", color: "#0ea5e9" }} onClick={() => { const r = reports.find(r => r.reportNo === entry.reportNo); if (r) { setView("report"); setActiveId(r.reportNo); setTab("summary"); } }}>{entry.name}</span> : (entry.name || "\u2014")}</td>
                             <td style={{ padding: "6px 5px", textAlign: "center" }}>{entry.status === "success" ? entry.borrowerCount : "\u2014"}</td>
                             <td style={{ padding: "6px 5px", textAlign: "center" }}>{entry.status === "success" ? entry.guarantorCount : "\u2014"}</td>
                             <td style={{ padding: "6px 5px", textAlign: "center" }}>{entry.status === "success" ? entry.facTotal : "\u2014"}</td>
@@ -751,8 +751,8 @@ export default function App() {
                             const s = calcScore(getBorrowerFacs(r)); const b2 = getBand(s.total, s.override);
                             return (
                               <tr key={r.reportNo} style={{ borderBottom: "1px solid #f1f5f9", cursor: "pointer" }} onClick={() => { setView("report"); setActiveId(r.reportNo); setTab("summary"); }}>
-                                <td style={{ padding: "7px 5px", fontWeight: 600 }}>{r.reportNo}</td>
-                                <td style={{ padding: "7px 5px", fontWeight: 500, maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.subject.displayName || "-"}</td>
+                                <td style={{ padding: "7px 5px", fontWeight: 600, color: "#0ea5e9" }}>{r.reportNo}</td>
+                                <td style={{ padding: "7px 5px", fontWeight: 500, maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#0ea5e9" }}>{r.subject.displayName || "-"}</td>
                                 <td style={{ padding: "7px 5px", fontSize: 10.5 }}>{r.subject.subjectType}</td>
                                 <td style={{ padding: "7px 5px", fontFamily: "monospace", fontSize: 10.5 }}>{(r.subject.nid || r.subject.regNo || "-").slice(0, 18)}</td>
                                 <td style={{ padding: "7px 5px" }}>{s.agg.total}</td>
