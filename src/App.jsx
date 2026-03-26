@@ -11,6 +11,7 @@ import Gauge from './components/shared/Gauge';
 import FacTable from './components/shared/FacTable';
 import FacSummaryBar from './components/shared/FacSummaryBar';
 import RepaymentChart from './components/shared/RepaymentChart';
+import ScoreExplainer from './components/shared/ScoreExplainer';
 
 const getBorrowerFacs = (r) => r.facilities.filter(f => f.role === "Borrower" || f.role === "CoBorrower");
 
@@ -162,6 +163,7 @@ export default function App() {
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           {reports.length > 1 && <button onClick={() => doExport(reports, "batch")} style={{ ...S.bo, background: "rgba(14,165,233,0.15)", color: "#7dd3fc", border: "1px solid rgba(56,189,248,0.3)", fontSize: 11 }}>Batch Export ({reports.length})</button>}
+          <button onClick={() => { setView("explainer"); setActiveId(null); }} title="Risk Grading Methodology" style={{ background: "rgba(14,165,233,0.15)", border: "1px solid rgba(56,189,248,0.3)", color: "#7dd3fc", width: 28, height: 28, borderRadius: "50%", cursor: "pointer", fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>?</button>
           <span style={{ fontSize: 11, color: "#7dd3fc" }}>{reports.length} report{reports.length !== 1 ? "s" : ""}</span>
         </div>
       </div>
@@ -233,8 +235,13 @@ export default function App() {
         {/* CONTENT */}
         <div style={{ flex: 1, overflow: "auto", padding: 20 }}>
 
+          {/* EXPLAINER */}
+          {view === "explainer" && (
+            <ScoreExplainer onBack={() => { setView(reports.length ? "batch" : "upload"); setActiveId(reports.length ? "batch" : null); }} />
+          )}
+
           {/* UPLOAD */}
-          {(view === "upload" || !reports.length) && (
+          {view !== "explainer" && (view === "upload" || !reports.length) && (
             <div style={{ maxWidth: 650, margin: "40px auto" }}>
               <div onDragOver={e => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)} onDrop={e => { e.preventDefault(); setDragOver(false); processFiles(e.dataTransfer.files); }}
                 style={{ border: "2px dashed " + (dragOver ? "#0ea5e9" : "#cbd5e1"), borderRadius: 16, padding: "50px 40px", textAlign: "center", background: dragOver ? "#f0f9ff" : "#fff", cursor: "pointer", transition: "all 0.2s" }}
