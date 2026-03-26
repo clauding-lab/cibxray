@@ -211,13 +211,17 @@ export default function App() {
             })}
             {reports.filter(r => { const k = r.subject.nid || r.subject.regNo || ""; return !k || !groups.find(g => g.key === k); }).map(r => {
               const rs = calcScore(getBorrowerFacs(r)); const rb = getBand(rs.total, rs.override);
+              const isClean = r.facilities.length === 0;
               return (
-                <div key={r.reportNo} onClick={() => navTo("report", r.reportNo, "summary")} style={{ padding: "9px 12px", cursor: "pointer", background: activeId === r.reportNo ? "rgba(14,165,233,0.1)" : "transparent", borderLeft: activeId === r.reportNo ? "3px solid " + rb.color : "3px solid transparent", borderBottom: "1px solid #152238" }}>
+                <div key={r.reportNo} onClick={() => navTo("report", r.reportNo, "summary")} style={{ padding: "9px 12px", cursor: "pointer", background: activeId === r.reportNo ? "rgba(14,165,233,0.1)" : "transparent", borderLeft: activeId === r.reportNo ? "3px solid " + (isClean ? "#22c55e" : rb.color) : "3px solid transparent", borderBottom: "1px solid #152238" }}>
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
                     <div style={{ fontSize: 11, fontWeight: 600, color: "#e0f2fe", maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.subject.displayName || r.reportNo}</div>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: rb.color }}>{rs.total}</span>
+                    {isClean
+                      ? <span style={{ fontSize: 9, fontWeight: 700, color: "#22c55e", background: "rgba(34,197,94,0.15)", padding: "1px 6px", borderRadius: 4 }}>CLEAN</span>
+                      : <span style={{ fontSize: 13, fontWeight: 700, color: rb.color }}>{rs.total}</span>
+                    }
                   </div>
-                  <div style={{ fontSize: 10, color: "#64748b" }}>{r.reportNo} | {r.subject.subjectType}</div>
+                  <div style={{ fontSize: 10, color: "#64748b" }}>{r.reportNo} | {r.subject.subjectType}{isClean ? " | No credit history" : ""}</div>
                 </div>
               );
             })}
@@ -306,6 +310,28 @@ export default function App() {
                 {/* SUMMARY TAB */}
                 {tab === "summary" && (
                   <div>
+                    {/* Clean CIB banner — no facilities at all */}
+                    {active.facilities.length === 0 && (
+                      <div style={{ ...S.card, background: "linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%)", border: "1px solid #86efac", textAlign: "center", padding: "28px 20px", marginBottom: 12 }}>
+                        <div style={{ fontSize: 36, marginBottom: 8 }}>{"\u2705"}</div>
+                        <div style={{ fontSize: 16, fontWeight: 700, color: "#166534", marginBottom: 4 }}>Clean CIB — No Credit History</div>
+                        <p style={{ fontSize: 12.5, color: "#15803d", margin: 0, lineHeight: 1.5 }}>
+                          This subject has no existing credit facilities with any financial institution.<br/>
+                          No borrowing, guarantor, or credit card records found in the CIB database.
+                        </p>
+                        {active.summary?.reportingInstitutes === 0 && (
+                          <div style={{ marginTop: 10, display: "inline-flex", gap: 16, fontSize: 11, color: "#166534" }}>
+                            <span>Reporting Institutes: <b>0</b></span>
+                            <span>Living Contracts: <b>0</b></span>
+                            <span>Outstanding: <b>৳0</b></span>
+                            <span>Overdue: <b>৳0</b></span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Score card — only show if there are facilities */}
+                    {active.facilities.length > 0 && (
                     <div style={{ ...S.card, display: "flex", alignItems: "center", gap: 18, background: b.bg, border: "1px solid " + b.color + "22" }}>
                       <Gauge score={scActive.total} override={scActive.override} />
                       <div style={{ flex: 1 }}>
@@ -314,7 +340,9 @@ export default function App() {
                         {scActive.override && <p style={{ fontSize: 11, color: b.color, fontWeight: 600, marginTop: 4 }}>Override: {scActive.override}</p>}
                       </div>
                     </div>
+                    )}
 
+                    {active.facilities.length > 0 && (
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 8, marginBottom: 12 }}>
                       {[["Live Facs", scActive.agg.live], ["Total Limit", "\u09F3" + fmt(scActive.agg.tLim)], ["Outstanding", "\u09F3" + fmt(scActive.agg.tOut)], ["Overdue", "\u09F3" + fmt(scActive.agg.tOver)], ["Utilization", (scActive.agg.util * 100).toFixed(0) + "%"]].map(([l, v], idx) => (
                         <div key={l} style={{ background: "#fff", borderRadius: 8, padding: "10px 12px", border: "1px solid #e2e8f0" }}>
@@ -323,6 +351,7 @@ export default function App() {
                         </div>
                       ))}
                     </div>
+                    )}
 
                     {/* Subject profile */}
                     <div style={S.card}>
@@ -359,7 +388,8 @@ export default function App() {
                       </div>
                     </div>
 
-                    {/* Score breakdown + flags */}
+                    {/* Score breakdown + flags — only with facilities */}
+                    {active.facilities.length > 0 && (
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                       <div style={S.card}>
                         <div style={S.sec}>Score Breakdown (3-Factor + Penalty)</div>
@@ -392,6 +422,7 @@ export default function App() {
                         ))}
                       </div>
                     </div>
+                    )}
                   </div>
                 )}
 
