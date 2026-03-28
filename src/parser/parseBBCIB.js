@@ -163,8 +163,10 @@ export function parseBBCIB(text, fileName) {
     const block = contractBlocks[i];
     if (block.length < 50) continue;
 
-    // Contract code: may be on a "###   ###   CODE   ###" line, or after "CIB contract\ncode"
+    // Contract code: may be on a "###   ###   CODE   ###" line, or after "CIB contract\ncode", or explicit FI code line
     const ccMatch = block.match(/###\s+###\s+([A-Z]\d[\w]+)/) ||
+                    block.match(/\d{3}\s+\d{4}\s+([A-Z]\d[\w]+)/) ||
+                    block.match(/CIB contract\s*\n?\s*code\s*\n?\s*(?:###|[A-Z]\d[\w]+)\s+(?:###\s+)?([A-Z]\d[\w]+)/) ||
                     block.match(/CIB contract\s*\n?\s*code[\s\S]*?([A-Z]\d[\w]+)/);
     const contractCode = ccMatch ? ccMatch[1] : "";
 
@@ -218,7 +220,7 @@ export function parseBBCIB(text, fileName) {
     const lawsuit = lawsuitMatch ? lawsuitMatch[1] : "";
 
     // ── Extract ALL monthly history rows ──
-    const histSection = block.match(/Monthly History[\s\S]*?(?=Contribution History|Phase:|$)/);
+    const histSection = block.match(/Monthly History[\s\S]*?(?=Contribution History|\nPhase:|\n\s*Phase:|$)/);
     let latestOutstanding = 0, latestOverdue = 0, latestStatus = "STD", latestLimit = sanctionLimit;
     const history = [];
 
