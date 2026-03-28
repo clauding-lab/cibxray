@@ -65,7 +65,10 @@ export function parseBBCIB(text, fileName) {
     return "";
   };
 
-  const personName = grabSub([/Name:\s*([A-Z][A-Z\s.]+?)(?:\s{2,}|Verified|$)/m]);
+  const personName = grabSub([
+    /Name:\s*([A-Z][A-Z\s.]+?)(?:\s{2,}|Not Verified|Verified|$)/m,
+    /Name:\s*([A-Z][A-Z\s.]+?)(?:\s{2,}|$)/m,
+  ]);
   const companyTradeName = grabSub([/Trade\s*[Nn]ame:\s*(.+?)(?:\s{2,}|\n|Reference|TIN|$)/m]);
   const inquiredTradeName = grab([/INQUIRED[\s\S]*?Trade\s*name\s+([A-Z][A-Z0-9\s&,.\-\/]+?)(?:\s{2,}|\n|Proprietorship|District)/]);
 

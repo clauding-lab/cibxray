@@ -109,7 +109,7 @@ export default function App() {
         const bFacs = getBorrowerFacs(parsed);
         const gFacs = parsed.facilities.filter(f => f.role === "Guarantor");
 
-        if (!parsed.subject.name && !parsed.subject.tradeName && parsed.facilities.length === 0) {
+        if (!parsed.subject.name && !parsed.subject.tradeName && !parsed.subject.cibSubjectCode && !parsed.subject.nid && parsed.facilities.length === 0) {
           throw new Error("No subject or facility data extracted. File may not be a valid BB CIB report.");
         }
 
