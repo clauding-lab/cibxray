@@ -186,24 +186,35 @@ export default function App() {
             )}
             {groups.map(g => {
               const gFacs = g.reports.flatMap(r => getBorrowerFacs(r));
-              const gs = calcScore(gFacs); const gb = getBand(gs.total, gs.override);
+              const gNoBorrower = gFacs.length === 0;
+              const gs = calcScore(gFacs);
+              const gb = gNoBorrower ? BANDS.find(b => b.key === "MODERATE") : getBand(gs.total, gs.override);
               const isA = activeId === "linked:" + g.key;
               return (
                 <div key={g.key}>
                   <div onClick={() => navTo("grp", "linked:" + g.key)} style={{ padding: "9px 12px", cursor: "pointer", background: isA ? "rgba(14,165,233,0.1)" : "transparent", borderLeft: isA ? "3px solid " + gb.color : "3px solid transparent", borderBottom: "1px solid #152238" }}>
                     <div style={{ display: "flex", justifyContent: "space-between" }}>
                       <div style={{ fontSize: 11, fontWeight: 600, color: "#e0f2fe", maxWidth: 150, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.name || "Group"}</div>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: gb.color }}>{gs.total}</span>
+                      {gNoBorrower
+                        ? <span style={{ fontSize: 9, fontWeight: 700, color: "#0284c7", background: "rgba(2,132,199,0.15)", padding: "1px 6px", borderRadius: 4 }}>CLEAN</span>
+                        : <span style={{ fontSize: 13, fontWeight: 700, color: gb.color }}>{gs.total}</span>
+                      }
                     </div>
                     <div style={{ fontSize: 10, color: "#64748b" }}>{g.key.slice(0, 20)} ({g.reports.length})</div>
                   </div>
                   {g.reports.map(r => {
-                    const rs = calcScore(getBorrowerFacs(r)); const rb = getBand(rs.total, rs.override);
+                    const rFacs = getBorrowerFacs(r);
+                    const rNoBorrower = rFacs.length === 0;
+                    const rs = calcScore(rFacs);
+                    const rb = rNoBorrower ? BANDS.find(b => b.key === "MODERATE") : getBand(rs.total, rs.override);
                     return (
                       <div key={r.reportNo} onClick={() => navTo("report", r.reportNo, "summary")} style={{ padding: "7px 12px 7px 26px", cursor: "pointer", background: activeId === r.reportNo ? "rgba(14,165,233,0.08)" : "transparent", borderLeft: activeId === r.reportNo ? "3px solid " + rb.color : "3px solid transparent", borderBottom: "1px solid #0f1d32" }}>
                         <div style={{ display: "flex", justifyContent: "space-between" }}>
                           <span style={{ fontSize: 10.5, fontWeight: 500, color: "#94a3b8" }}>{r.reportNo}</span>
-                          <span style={{ fontSize: 12, fontWeight: 700, color: rb.color }}>{rs.total}</span>
+                          {rNoBorrower
+                            ? <span style={{ fontSize: 9, fontWeight: 700, color: "#0284c7", background: "rgba(2,132,199,0.15)", padding: "1px 6px", borderRadius: 4 }}>CLEAN</span>
+                            : <span style={{ fontSize: 12, fontWeight: 700, color: rb.color }}>{rs.total}</span>
+                          }
                         </div>
                       </div>
                     );
@@ -408,6 +419,7 @@ export default function App() {
                           const nvBadge = <span style={{ background: "#dc2626", color: "#fff", fontSize: 8.5, fontWeight: 700, padding: "1px 5px", borderRadius: 3, marginLeft: 6, verticalAlign: "middle", letterSpacing: 0.3 }}>NOT VERIFIED</span>;
                           const isIndividual = s.subjectType === "INDIVIDUAL";
                           const fields = [
+                            ["Date of Inquiry", active.inquiryDate ? active.inquiryDate.split(/\s/)[0] : ""],
                             isIndividual && s.tradeName ? ["Trade / Business Name", s.tradeName] : null,
                             ["Name", s.name, v.name],
                             ["Type", s.subjectType],
@@ -851,7 +863,7 @@ export default function App() {
                     <div style={{ overflowX: "auto" }}>
                       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11.5 }}>
                         <thead><tr style={{ borderBottom: "2px solid #e2e8f0" }}>
-                          {["#", "Name", "Type", "NID/Reg", "Facs", "Limit", "O/S", "Overdue", "Score", "Risk", ""].map(h =>
+                          {["#", "Name", "Type", "NID/Reg", "Inquiry Date", "Facs", "Limit", "O/S", "Overdue", "Score", "Risk", ""].map(h =>
                             <th key={h} style={{ textAlign: "left", padding: "7px 5px", fontSize: 10, fontWeight: 600, color: "#64748b" }}>{h}</th>
                           )}
                         </tr></thead>
@@ -867,6 +879,7 @@ export default function App() {
                                 <td style={{ padding: "7px 5px", fontWeight: 500, maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#0ea5e9" }}>{r.subject.displayName || "-"}</td>
                                 <td style={{ padding: "7px 5px", fontSize: 10.5 }}>{r.subject.subjectType}</td>
                                 <td style={{ padding: "7px 5px", fontFamily: "monospace", fontSize: 10.5 }}>{(r.subject.nid || r.subject.regNo || "-").slice(0, 18)}</td>
+                                <td style={{ padding: "7px 5px", fontSize: 10.5, whiteSpace: "nowrap" }}>{r.inquiryDate ? r.inquiryDate.split(/\s/)[0] : "—"}</td>
                                 <td style={{ padding: "7px 5px" }}>{noBorrower ? "—" : s.agg.total}</td>
                                 <td style={{ padding: "7px 5px", fontFamily: "monospace" }}>{noBorrower ? "—" : fmt(s.agg.tLim)}</td>
                                 <td style={{ padding: "7px 5px", fontFamily: "monospace" }}>{noBorrower ? "—" : fmt(s.agg.tOut)}</td>
