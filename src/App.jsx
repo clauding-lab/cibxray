@@ -379,10 +379,11 @@ export default function App() {
                           const s = active.subject;
                           const v = s.verified || {};
                           const vBadge = <span style={{ background: "#059669", color: "#fff", fontSize: 8.5, fontWeight: 700, padding: "1px 5px", borderRadius: 3, marginLeft: 6, verticalAlign: "middle", letterSpacing: 0.3 }}>VERIFIED</span>;
+                          const nvBadge = <span style={{ background: "#dc2626", color: "#fff", fontSize: 8.5, fontWeight: 700, padding: "1px 5px", borderRadius: 3, marginLeft: 6, verticalAlign: "middle", letterSpacing: 0.3 }}>NOT VERIFIED</span>;
                           const isIndividual = s.subjectType === "INDIVIDUAL";
                           const fields = [
-                            isIndividual ? ["Trade / Business Name", s.tradeName] : ["Name", s.name],
-                            isIndividual ? ["Proprietor", s.proprietor, v.name] : null,
+                            isIndividual && s.tradeName ? ["Trade / Business Name", s.tradeName] : null,
+                            ["Name", s.name, v.name],
                             ["Type", s.subjectType],
                             ["CIB Code", s.cibSubjectCode],
                             ["NID (17)", s.nid17, v.nid17],
@@ -398,9 +399,9 @@ export default function App() {
                             ["Legal Form", s.legalForm],
                             ["Phone", s.phone],
                             ["Address", s.address],
-                          ].filter(f => f && f[1]);
-                          return fields.map(([l, val, isV]) => (
-                            <div key={l}><div style={{ fontSize: 9.5, color: "#94a3b8", marginBottom: 1 }}>{l}</div><div style={{ fontSize: 12, fontWeight: 500 }}>{val}{isV ? vBadge : null}</div></div>
+                          ].filter(f => f && (f[1] || f[2] !== undefined));
+                          return fields.map(([l, val, vStatus]) => (
+                            <div key={l}><div style={{ fontSize: 9.5, color: "#94a3b8", marginBottom: 1 }}>{l}</div><div style={{ fontSize: 12, fontWeight: 500 }}>{val || "—"}{vStatus === true ? vBadge : vStatus === false ? nvBadge : null}</div></div>
                           ));
                         })()}
                       </div>
@@ -674,7 +675,9 @@ export default function App() {
           {/* LINKED GROUP VIEW */}
           {view === "grp" && activeGroup && (() => {
             const allFacs = activeGroup.reports.flatMap(r => getBorrowerFacs(r));
-            const gs = calcScore(allFacs); const gb = getBand(gs.total, gs.override);
+            const groupNoBorrower = allFacs.length === 0;
+            const gs = calcScore(allFacs);
+            const gb = groupNoBorrower ? BANDS.find(b => b.key === "MODERATE") : getBand(gs.total, gs.override);
             return (
               <div>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
@@ -684,18 +687,30 @@ export default function App() {
                   </div>
                   <button onClick={() => doExport(activeGroup.reports, "linked", activeGroup.name)} style={S.bo}>Export Linked .xlsx</button>
                 </div>
-                <div style={{ ...S.card, display: "flex", alignItems: "center", gap: 18, background: gb.bg, border: "1px solid " + gb.color + "22" }}>
-                  <Gauge score={gs.total} override={gs.override} />
-                  <div><div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>ACCUMULATED GROUP SCORE</div><p style={{ fontSize: 12, color: "#334155" }}>{gb.desc}</p></div>
-                </div>
+                {groupNoBorrower ? (
+                  <div style={{ ...S.card, textAlign: "center", padding: "30px 20px", background: "#f0f9ff", border: "1px solid #bae6fd" }}>
+                    <div style={{ fontSize: 32, marginBottom: 8 }}>{"\u26A0\uFE0F"}</div>
+                    <h3 style={{ fontSize: 15, fontWeight: 700, color: "#0c4a6e", marginBottom: 6 }}>Clean CIB — No Credit History as Borrower</h3>
+                    <span style={{ display: "inline-block", border: "1.5px solid #0284c7", color: "#0284c7", fontWeight: 700, fontSize: 12, padding: "3px 14px", borderRadius: 6, marginBottom: 10 }}>MODERATE RISK</span>
+                    <p style={{ fontSize: 12, color: "#475569", maxWidth: 500, margin: "0 auto" }}>None of the linked reports have borrower facilities. No credit history to assess.</p>
+                  </div>
+                ) : (
+                  <div style={{ ...S.card, display: "flex", alignItems: "center", gap: 18, background: gb.bg, border: "1px solid " + gb.color + "22" }}>
+                    <Gauge score={gs.total} override={gs.override} />
+                    <div><div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>ACCUMULATED GROUP SCORE</div><p style={{ fontSize: 12, color: "#334155" }}>{gb.desc}</p></div>
+                  </div>
+                )}
                 <div style={S.card}>
                   <div style={S.sec}>Individual Scores</div>
                   {activeGroup.reports.map(r => {
-                    const rs = calcScore(getBorrowerFacs(r)); const rb = getBand(rs.total, rs.override);
+                    const rFacs = getBorrowerFacs(r);
+                    const rNoBorrower = rFacs.length === 0;
+                    const rs = calcScore(rFacs);
+                    const rb = rNoBorrower ? BANDS.find(b => b.key === "MODERATE") : getBand(rs.total, rs.override);
                     return (
                       <div key={r.reportNo} onClick={() => { setView("report"); setActiveId(r.reportNo); setTab("summary"); }} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #f1f5f9", cursor: "pointer" }}>
                         <div><span style={{ fontWeight: 600, color: "#3b82f6", marginRight: 8 }}>{r.reportNo}</span><span>{r.subject.displayName}</span></div>
-                        <div><span style={{ fontWeight: 700, color: rb.color, marginRight: 8 }}>{rs.total}</span><span style={{ fontSize: 10.5, color: rb.color }}>{rb.label}</span></div>
+                        <div><span style={{ fontWeight: 700, color: rb.color, marginRight: 8 }}>{rNoBorrower ? "—" : rs.total}</span><span style={{ fontSize: 10.5, color: rb.color }}>{rNoBorrower ? "MODERATE (Clean)" : rb.label}</span></div>
                       </div>
                     );
                   })}

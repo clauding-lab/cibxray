@@ -42,17 +42,32 @@ export function parseBBCIB(text, fileName) {
   report.subject.subjectType = grab([/Type of subject:\s*(INDIVIDUAL|COMPANY)/i]);
 
   // ── VERIFIED FIELD TRACKING ──
+  // Values: true = "Verified", false = "Not Verified", undefined = not present
   report.subject.verified = {};
-  const checkVerified = (field, patterns) => {
-    for (const p of patterns) {
-      const m = fullText.match(p);
-      if (m) { report.subject.verified[field] = true; return; }
+  const checkVerified = (field, verifiedPat, notVerifiedPat) => {
+    for (const p of verifiedPat) {
+      if (fullText.match(p)) { report.subject.verified[field] = true; return; }
+    }
+    for (const p of notVerifiedPat) {
+      if (fullText.match(p)) { report.subject.verified[field] = false; return; }
     }
   };
-  checkVerified("name", [/Name:\s*[A-Z][A-Z\s.]+\s+Verified/]);
-  checkVerified("nid17", [/NID\s*\(17\s*Digit\):\s*\d{17}\s*Verified/]);
-  checkVerified("nid10", [/NID\s*\(10\s*Digit\):\s*\d{10}\s*Verified/]);
-  checkVerified("dob", [/Date of birth:\s*\d{2}\/\d{2}\/\d{4}\s*Verified/i]);
+  checkVerified("name",
+    [/Name:\s*[A-Z][A-Z\s.\-]+\s+Verified(?!\s*\w)/],
+    [/Name:\s*[A-Z][A-Z\s.\-]+\s+Not Verified/]
+  );
+  checkVerified("nid17",
+    [/NID\s*\(17\s*Digit\):\s*\d{17}\s*Verified(?!\s*\w)/],
+    [/NID\s*\(17\s*Digit\):\s*\d{17}\s*Not Verified/]
+  );
+  checkVerified("nid10",
+    [/NID\s*\(10\s*Digit\):\s*\d{10}\s*Verified(?!\s*\w)/],
+    [/NID\s*\(10\s*Digit\):\s*\d{10}\s*Not Verified/]
+  );
+  checkVerified("dob",
+    [/Date of birth:\s*\d{2}\/\d{2}\/\d{4}\s*Verified(?!\s*\w)/i],
+    [/Date of birth:\s*(?:\d{2}\/\d{2}\/\d{4}\s*)?Not Verified/i]
+  );
 
   // ── NAME EXTRACTION (scoped to SUBJECT INFORMATION block) ──
   const subjectBlock = fullText.match(/SUBJECT INFORMATION[\s\S]*?(?=ADDRESS|LINKED|LIST OF OWNERS|1\.\s*SUMMARY)/);
@@ -66,8 +81,8 @@ export function parseBBCIB(text, fileName) {
   };
 
   const personName = grabSub([
-    /Name:\s*([A-Z][A-Z\s.]+?)(?:\s{2,}|Not Verified|Verified|$)/m,
-    /Name:\s*([A-Z][A-Z\s.]+?)(?:\s{2,}|$)/m,
+    /Name:\s*([A-Z][A-Z\s.\-]+?)\s+(?:Not Verified|Verified)/m,
+    /Name:\s*([A-Z][A-Z\s.\-]+?)(?:\s{2,}|$)/m,
   ]);
   const companyTradeName = grabSub([/Trade\s*[Nn]ame:\s*(.+?)(?:\s{2,}|\n|Reference|TIN|$)/m]);
   const inquiredTradeName = grab([/INQUIRED[\s\S]*?Trade\s*name\s+([A-Z][A-Z0-9\s&,.\-\/]+?)(?:\s{2,}|\n|Proprietorship|District)/]);
