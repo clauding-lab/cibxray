@@ -492,15 +492,61 @@ export default function App() {
                     {(() => {
                       const liveBorrower = borrowerFacs.filter(f => f.status === "Live");
                       const termBorrower = borrowerFacs.filter(f => f.status !== "Live");
+                      const liveFunded = liveBorrower.filter(f => f.nature === "Funded");
+                      const liveNonFunded = liveBorrower.filter(f => f.nature === "Non-Funded");
+                      const termFunded = termBorrower.filter(f => f.nature === "Funded");
+                      const termNonFunded = termBorrower.filter(f => f.nature === "Non-Funded");
                       return (
                         <>
                           <div style={S.card}>
                             <div style={{ ...S.sec, color: "#059669" }}>Live Facilities ({liveBorrower.length})</div>
-                            {liveBorrower.length > 0 ? <FacTable facs={liveBorrower} /> : <p style={{ color: "#94a3b8", fontSize: 12 }}>No live borrower facilities.</p>}
+                            {liveBorrower.length > 0 ? (
+                              <>
+                                {liveFunded.length > 0 && (
+                                  <div style={{ marginBottom: liveNonFunded.length > 0 ? 16 : 0 }}>
+                                    <div style={{ fontSize: 11, fontWeight: 700, color: "#1d4ed8", marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
+                                      <span style={{ background: "#dbeafe", padding: "1px 8px", borderRadius: 4, fontSize: 10 }}>Funded</span>
+                                      <span style={{ color: "#94a3b8", fontWeight: 400 }}>({liveFunded.length})</span>
+                                    </div>
+                                    <FacTable facs={liveFunded} showTotals />
+                                  </div>
+                                )}
+                                {liveNonFunded.length > 0 && (
+                                  <div>
+                                    <div style={{ fontSize: 11, fontWeight: 700, color: "#15803d", marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
+                                      <span style={{ background: "#f0fdf4", padding: "1px 8px", borderRadius: 4, fontSize: 10 }}>Non-Funded</span>
+                                      <span style={{ color: "#94a3b8", fontWeight: 400 }}>({liveNonFunded.length})</span>
+                                    </div>
+                                    <FacTable facs={liveNonFunded} showTotals />
+                                  </div>
+                                )}
+                              </>
+                            ) : <p style={{ color: "#94a3b8", fontSize: 12 }}>No live borrower facilities.</p>}
                           </div>
                           <div style={S.card}>
                             <div style={{ ...S.sec, color: "#64748b" }}>Terminated / Settled Facilities ({termBorrower.length})</div>
-                            {termBorrower.length > 0 ? <FacTable facs={termBorrower} /> : <p style={{ color: "#94a3b8", fontSize: 12 }}>No terminated borrower facilities.</p>}
+                            {termBorrower.length > 0 ? (
+                              <>
+                                {termFunded.length > 0 && (
+                                  <div style={{ marginBottom: termNonFunded.length > 0 ? 16 : 0 }}>
+                                    <div style={{ fontSize: 11, fontWeight: 700, color: "#1d4ed8", marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
+                                      <span style={{ background: "#dbeafe", padding: "1px 8px", borderRadius: 4, fontSize: 10 }}>Funded</span>
+                                      <span style={{ color: "#94a3b8", fontWeight: 400 }}>({termFunded.length})</span>
+                                    </div>
+                                    <FacTable facs={termFunded} showTotals />
+                                  </div>
+                                )}
+                                {termNonFunded.length > 0 && (
+                                  <div>
+                                    <div style={{ fontSize: 11, fontWeight: 700, color: "#15803d", marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
+                                      <span style={{ background: "#f0fdf4", padding: "1px 8px", borderRadius: 4, fontSize: 10 }}>Non-Funded</span>
+                                      <span style={{ color: "#94a3b8", fontWeight: 400 }}>({termNonFunded.length})</span>
+                                    </div>
+                                    <FacTable facs={termNonFunded} showTotals />
+                                  </div>
+                                )}
+                              </>
+                            ) : <p style={{ color: "#94a3b8", fontSize: 12 }}>No terminated borrower facilities.</p>}
                           </div>
                         </>
                       );
@@ -519,10 +565,30 @@ export default function App() {
                         {(() => {
                           const liveG = guarantorFacs.filter(f => f.status === "Live");
                           const termG = guarantorFacs.filter(f => f.status !== "Live");
+                          const liveFG = liveG.filter(f => f.nature === "Funded");
+                          const liveNFG = liveG.filter(f => f.nature === "Non-Funded");
+                          const termFG = termG.filter(f => f.nature === "Funded");
+                          const termNFG = termG.filter(f => f.nature === "Non-Funded");
                           return (
                             <>
-                              <div style={S.card}><div style={{ ...S.sec, color: "#059669" }}>Live Facilities ({liveG.length})</div>{liveG.length > 0 ? <FacTable facs={liveG} /> : <p style={{ color: "#94a3b8", fontSize: 12 }}>No live guarantor facilities.</p>}</div>
-                              <div style={S.card}><div style={{ ...S.sec, color: "#64748b" }}>Terminated / Settled ({termG.length})</div>{termG.length > 0 ? <FacTable facs={termG} /> : <p style={{ color: "#94a3b8", fontSize: 12 }}>No terminated guarantor facilities.</p>}</div>
+                              <div style={S.card}>
+                                <div style={{ ...S.sec, color: "#059669" }}>Live Facilities ({liveG.length})</div>
+                                {liveG.length > 0 ? (
+                                  <>
+                                    {liveFG.length > 0 && <div style={{ marginBottom: liveNFG.length > 0 ? 16 : 0 }}><div style={{ fontSize: 11, fontWeight: 700, color: "#1d4ed8", marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}><span style={{ background: "#dbeafe", padding: "1px 8px", borderRadius: 4, fontSize: 10 }}>Funded</span><span style={{ color: "#94a3b8", fontWeight: 400 }}>({liveFG.length})</span></div><FacTable facs={liveFG} showTotals /></div>}
+                                    {liveNFG.length > 0 && <div><div style={{ fontSize: 11, fontWeight: 700, color: "#15803d", marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}><span style={{ background: "#f0fdf4", padding: "1px 8px", borderRadius: 4, fontSize: 10 }}>Non-Funded</span><span style={{ color: "#94a3b8", fontWeight: 400 }}>({liveNFG.length})</span></div><FacTable facs={liveNFG} showTotals /></div>}
+                                  </>
+                                ) : <p style={{ color: "#94a3b8", fontSize: 12 }}>No live guarantor facilities.</p>}
+                              </div>
+                              <div style={S.card}>
+                                <div style={{ ...S.sec, color: "#64748b" }}>Terminated / Settled ({termG.length})</div>
+                                {termG.length > 0 ? (
+                                  <>
+                                    {termFG.length > 0 && <div style={{ marginBottom: termNFG.length > 0 ? 16 : 0 }}><div style={{ fontSize: 11, fontWeight: 700, color: "#1d4ed8", marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}><span style={{ background: "#dbeafe", padding: "1px 8px", borderRadius: 4, fontSize: 10 }}>Funded</span><span style={{ color: "#94a3b8", fontWeight: 400 }}>({termFG.length})</span></div><FacTable facs={termFG} showTotals /></div>}
+                                    {termNFG.length > 0 && <div><div style={{ fontSize: 11, fontWeight: 700, color: "#15803d", marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}><span style={{ background: "#f0fdf4", padding: "1px 8px", borderRadius: 4, fontSize: 10 }}>Non-Funded</span><span style={{ color: "#94a3b8", fontWeight: 400 }}>({termNFG.length})</span></div><FacTable facs={termNFG} showTotals /></div>}
+                                  </>
+                                ) : <p style={{ color: "#94a3b8", fontSize: 12 }}>No terminated guarantor facilities.</p>}
+                              </div>
                             </>
                           );
                         })()}

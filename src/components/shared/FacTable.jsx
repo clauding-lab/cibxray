@@ -1,7 +1,11 @@
 import { CLS } from '../../constants/classifications';
 import { fmt } from '../../utils/format';
 
-export default function FacTable({ facs, showRole }) {
+export default function FacTable({ facs, showRole, showTotals }) {
+  const tLim = facs.reduce((s, f) => s + (f.limit || 0), 0);
+  const tOut = facs.reduce((s, f) => s + (f.outstanding || 0), 0);
+  const tOver = facs.reduce((s, f) => s + (f.overdue || 0), 0);
+
   return (
     <div style={{ overflowX: "auto" }}>
       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11.5 }}>
@@ -25,6 +29,15 @@ export default function FacTable({ facs, showRole }) {
               <td style={{ padding: "6px 4px" }}><span style={{ background: (CLS[f.classification] || CLS.STD).bg, color: (CLS[f.classification] || CLS.STD).color, padding: "1px 6px", borderRadius: 3, fontSize: 10.5, fontWeight: 600 }}>{f.classification}</span></td>
             </tr>
           ))}
+          {showTotals && facs.length > 0 && (
+            <tr style={{ borderTop: "2px solid #cbd5e1", background: "#f8fafc" }}>
+              <td colSpan={showRole ? 6 : 5} style={{ padding: "7px 4px", fontSize: 11, fontWeight: 700, color: "#334155", textAlign: "right" }}>Total ({facs.length})</td>
+              <td style={{ padding: "7px 4px", fontFamily: "monospace", fontSize: 11, fontWeight: 700, color: "#0f172a" }}>{fmt(tLim)}</td>
+              <td style={{ padding: "7px 4px", fontFamily: "monospace", fontSize: 11, fontWeight: 700, color: "#0f172a" }}>{fmt(tOut)}</td>
+              <td style={{ padding: "7px 4px", fontFamily: "monospace", fontSize: 11, fontWeight: 700, color: tOver > 0 ? "#dc2626" : "#059669" }}>{fmt(tOver)}</td>
+              <td></td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>
