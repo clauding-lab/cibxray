@@ -305,15 +305,17 @@ export default function App() {
                 }
               }
             }
-            // 2. Unverified Name/NID
-            const v = active.subject.verified || {};
-            const unverified = [];
-            if (v.name === false) unverified.push("Name");
-            if (v.nid17 === false) unverified.push("NID (17)");
-            if (v.nid10 === false) unverified.push("NID (10)");
-            if (v.dob === false) unverified.push("DOB");
-            if (unverified.length > 0) {
-              reportFlags.push({ icon: "\u26A0", label: "Unverified Name/NID", severity: "warning", desc: "The following fields are NOT VERIFIED by Bangladesh Bank: " + unverified.join(", ") + ". Identity confirmation required before credit decision." });
+            // 2. Unverified Name/NID (only for INDIVIDUAL — companies don't have verification markers)
+            if (active.subject.subjectType === "INDIVIDUAL") {
+              const v = active.subject.verified || {};
+              const unverified = [];
+              if (v.name === false) unverified.push("Name");
+              if (v.nid17 === false) unverified.push("NID (17)");
+              if (v.nid10 === false) unverified.push("NID (10)");
+              if (v.dob === false) unverified.push("DOB");
+              if (unverified.length > 0) {
+                reportFlags.push({ icon: "\u26A0", label: "Unverified Name/NID", severity: "warning", desc: "The following fields are NOT VERIFIED by Bangladesh Bank: " + unverified.join(", ") + ". Identity confirmation required before credit decision." });
+              }
             }
 
             const redFlagCount = redFlagFacs.length + reportFlags.length;

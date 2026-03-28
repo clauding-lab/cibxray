@@ -39,7 +39,7 @@ export function parseBBCIB(text, fileName) {
   };
 
   report.subject.cibSubjectCode = grab([/CIB subject code:\s*([A-Z0-9]+)/i]);
-  report.subject.subjectType = grab([/Type of subject:\s*(INDIVIDUAL|COMPANY)/i]);
+  report.subject.subjectType = grab([/Type of subject:?\s*(INDIVIDUAL|COMPANY)/i]).toUpperCase();
 
   // ── VERIFIED FIELD TRACKING ──
   // Values: true = "Verified", false = "Not Verified", undefined = not present
@@ -220,7 +220,7 @@ export function parseBBCIB(text, fileName) {
     const lawsuit = lawsuitMatch ? lawsuitMatch[1] : "";
 
     // ── Extract ALL monthly history rows ──
-    const histSection = block.match(/Monthly History[\s\S]*?(?=Contribution History|\nPhase:|\n\s*Phase:|$)/);
+    const histSection = block.match(/Monthly History[\s\S]*?(?=Contribution History|$)/);
     let latestOutstanding = 0, latestOverdue = 0, latestStatus = "STD", latestLimit = sanctionLimit;
     const history = [];
 
