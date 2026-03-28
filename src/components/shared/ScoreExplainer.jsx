@@ -83,6 +83,8 @@ const RED_FLAGS_INFO = [
   { flag: "Lawsuit Filed", desc: "Legal suit filed on a facility", severity: "Warning" },
   { flag: "Live SMA", desc: "Any live facility classified as Special Mention Account", severity: "Warning" },
   { flag: "Adverse Status (SS/DF/BL)", desc: "Any facility (live or terminated) with adverse classification", severity: "Warning" },
+  { flag: "Expired CIB Report", desc: "Inquiry date is more than 60 days old from upload date", severity: "Warning" },
+  { flag: "Unverified Name/NID", desc: "Name, NID, or DOB marked 'Not Verified' by Bangladesh Bank", severity: "Warning" },
 ];
 
 const s = {

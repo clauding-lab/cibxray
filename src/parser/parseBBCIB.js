@@ -116,6 +116,10 @@ export function parseBBCIB(text, fileName) {
   const addrMatch = fullText.match(/(?:Permanent|Present|Business)\s+([A-Z][A-Z0-9,.\s\/\-]+?)(?:\s+\d{4}\s+)/);
   if (addrMatch) report.subject.address = addrMatch[1].trim();
 
+  // ── INQUIRY DATE ──
+  const inqDateStr = grab([/(\d{2}-[A-Z][a-z]{2}-\d{4}\s+\d{1,2}:\d{2}:\d{2}\s*[AP]M)/, /Date of Inquiry\s*[\n\s]+(\d{2}-[A-Z][a-z]{2}-\d{4})/]);
+  report.inquiryDate = inqDateStr || "";
+
   // ── SUMMARY EXTRACTION ──
   const sumMatch = fullText.match(/SUMMARY OF FACILITY\(S\) AS BORROWER.*?No of reporting Institutes:\s*(\d+).*?Total Overdue Amount:\s*([\d,]+).*?No of Living Contracts:\s*(\d+).*?Total Outstanding Amount:\s*([\d,]+)/s);
   if (sumMatch) {

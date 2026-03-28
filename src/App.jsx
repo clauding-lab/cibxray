@@ -279,7 +279,33 @@ export default function App() {
               ["SS", "DF", "BL", "BLW"].includes(f.classification) ||
               (f.classification === "SMA" && f.status === "Live")
             );
-            const redFlagCount = redFlagFacs.length;
+
+            // Report-level red flags
+            const reportFlags = [];
+            // 1. Expired CIB — inquiry date > 2 months old
+            if (active.inquiryDate) {
+              const parsed = new Date(active.inquiryDate.replace(/(\d{2})-([A-Z][a-z]{2})-(\d{4})/, "$2 $1, $3"));
+              if (!isNaN(parsed)) {
+                const now = new Date();
+                const diffMs = now - parsed;
+                const diffDays = Math.floor(diffMs / 86400000);
+                if (diffDays > 60) {
+                  reportFlags.push({ icon: "\u23F0", label: "Expired CIB Report", severity: "warning", desc: "Inquiry date " + active.inquiryDate.split(/\s/)[0] + " is " + diffDays + " days old (>60 days). Request a fresh CIB report." });
+                }
+              }
+            }
+            // 2. Unverified Name/NID
+            const v = active.subject.verified || {};
+            const unverified = [];
+            if (v.name === false) unverified.push("Name");
+            if (v.nid17 === false) unverified.push("NID (17)");
+            if (v.nid10 === false) unverified.push("NID (10)");
+            if (v.dob === false) unverified.push("DOB");
+            if (unverified.length > 0) {
+              reportFlags.push({ icon: "\u26A0", label: "Unverified Name/NID", severity: "warning", desc: "The following fields are NOT VERIFIED by Bangladesh Bank: " + unverified.join(", ") + ". Identity confirmation required before credit decision." });
+            }
+
+            const redFlagCount = redFlagFacs.length + reportFlags.length;
 
             return (
               <div>
@@ -512,6 +538,8 @@ export default function App() {
                       const smaLive = allFacs.filter(f => f.classification === "SMA" && f.status === "Live");
                       const totalReschedCount = allFacs.reduce((s, f) => s + (f.rescheduledCount || 0), 0);
 
+                      const hasExpired = reportFlags.some(f => f.label === "Expired CIB Report");
+                      const hasUnverified = reportFlags.some(f => f.label === "Unverified Name/NID");
                       const counters = [
                         { label: "Defaulter", count: defaults.length, color: "#dc2626", icon: "\u26D4" },
                         { label: "Willful Default", count: willful.length, color: "#991b1b", icon: "\u2620" },
@@ -520,11 +548,13 @@ export default function App() {
                         { label: "Lawsuit", count: lawsuitFacs.length, color: "#991b1b", icon: "\u2696" },
                         { label: "Live SMA", count: smaLive.length, color: "#d97706", icon: "\u26A0" },
                         { label: "Adverse (SS/DF/BL)", count: advClass.length, color: "#dc2626", icon: "\u2717" },
+                        { label: "Expired CIB", count: hasExpired ? 1 : 0, color: "#d97706", icon: "\u23F0" },
+                        { label: "Unverified ID", count: hasUnverified ? 1 : 0, color: "#d97706", icon: "\u26A0" },
                       ];
 
                       return (
                         <>
-                          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 16 }}>
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 10, marginBottom: 16 }}>
                             {counters.map(c => (
                               <div key={c.label} style={{ background: c.count > 0 ? "#fef2f2" : "#fff", borderRadius: 8, padding: "12px 14px", border: "1px solid " + (c.count > 0 ? c.color + "30" : "#e2e8f0"), textAlign: "center" }}>
                                 <div style={{ fontSize: 18, marginBottom: 2 }}>{c.icon}</div>
@@ -535,9 +565,22 @@ export default function App() {
                             ))}
                           </div>
 
-                          {redFlagCount > 0 ? (
+                          {/* Report-level flags */}
+                          {reportFlags.length > 0 && (
+                            <div style={{ ...S.card, marginBottom: 12 }}>
+                              <div style={{ ...S.sec, color: "#d97706" }}>{"\u26A0"} Report-Level Warnings ({reportFlags.length})</div>
+                              {reportFlags.map((rf, i) => (
+                                <div key={i} style={{ background: "#fffbeb", border: "1px solid #d9770630", borderRadius: 8, padding: "12px 16px", marginBottom: 10 }}>
+                                  <div style={{ fontWeight: 700, fontSize: 13, color: "#92400e", marginBottom: 4 }}>{rf.icon} {rf.label}</div>
+                                  <div style={{ fontSize: 12, color: "#78350f" }}>{rf.desc}</div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {redFlagFacs.length > 0 ? (
                             <div style={S.card}>
-                              <div style={{ ...S.sec, color: "#dc2626" }}>{"\u26D4"} Flagged Facilities ({redFlagCount})</div>
+                              <div style={{ ...S.sec, color: "#dc2626" }}>{"\u26D4"} Flagged Facilities ({redFlagFacs.length})</div>
                               {redFlagFacs.map((f, i) => {
                                 const reasons = [];
                                 if (f.defaultStatus === "Yes") reasons.push({ text: "Defaulter (not Willful)", severity: "high" });
@@ -577,7 +620,9 @@ export default function App() {
                                 );
                               })}
                             </div>
-                          ) : (
+                          ) : null}
+
+                          {redFlagCount === 0 && (
                             <div style={{ ...S.card, textAlign: "center", padding: 40 }}>
                               <div style={{ fontSize: 32, marginBottom: 8 }}>{"\u2705"}</div>
                               <p style={{ fontSize: 14, fontWeight: 600, color: "#059669", marginBottom: 4 }}>No Red Flags</p>
