@@ -2,7 +2,7 @@
   "name": "CIBxRay",
   "short_name": "CIBxRay",
   "description": "Credit Bureau Intelligence Platform — Parse, score, and analyze Bangladesh Bank CIB reports",
-  "start_url": "/cibxray/",
+  "start_url": "/",
   "display": "standalone",
   "theme_color": "#020617",
   "background_color": "#f8fafc",
