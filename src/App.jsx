@@ -186,7 +186,7 @@ export default function App() {
           <div style={{ width: sideW, overflow: "auto", height: "100%" }}>
             <div style={{ padding: "10px 12px", borderBottom: "1px solid #1e3a5f", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ fontSize: 11, fontWeight: 600, color: "#7dd3fc", letterSpacing: 1 }}>REPORTS</span>
-              <button onClick={() => { setView("upload"); setActiveId(null); }} style={{ background: "rgba(14,165,233,0.15)", color: "#7dd3fc", border: "1px solid rgba(56,189,248,0.25)", padding: "3px 10px", borderRadius: 5, fontSize: 11, fontWeight: 500, cursor: "pointer" }}>Upload</button>
+              <button onClick={() => { setView("upload"); setActiveId(null); }} title="Upload CIB Reports" style={{ background: "rgba(14,165,233,0.15)", color: "#7dd3fc", border: "1px solid rgba(56,189,248,0.25)", width: 26, height: 26, borderRadius: 5, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>{"\u2B06"}</button>
             </div>
             {(reports.length > 0 || fileLog.length > 0) && (
               <div onClick={() => navTo("batch", "batch")} style={{ padding: "9px 12px", cursor: "pointer", background: view === "batch" ? "rgba(14,165,233,0.1)" : "transparent", borderLeft: view === "batch" ? "3px solid #0ea5e9" : "3px solid transparent", borderBottom: "1px solid #1e3a5f" }}>
