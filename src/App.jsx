@@ -21,6 +21,9 @@ export default function App() {
   const [view, setView] = useState("upload");
   const [tab, setTab] = useState("summary");
   const [processing, setProcessing] = useState(false);
+  const [progressCurrent, setProgressCurrent] = useState(0);
+  const [progressTotal, setProgressTotal] = useState(0);
+  const [currentFileName, setCurrentFileName] = useState("");
   const [fileLog, setFileLog] = useState([]);
   const [dragOver, setDragOver] = useState(false);
   const [sideOpen, setSideOpen] = useState(window.innerWidth > 768);
@@ -89,6 +92,9 @@ export default function App() {
 
     if (!pdfs.length && !nonPdfs.length) return;
     setProcessing(true);
+    setProgressTotal(pdfs.length);
+    setProgressCurrent(0);
+    setCurrentFileName("");
 
     const processingEntries = pdfs.map(f => ({
       fileName: f.name, fileSize: f.size, status: "processing", reportNo: "", name: "",
@@ -101,6 +107,7 @@ export default function App() {
 
     for (let pi = 0; pi < pdfs.length; pi++) {
       const file = pdfs[pi];
+      setCurrentFileName(file.name);
       try {
         const text = await pdfToText(file);
         const parsed = parseBBCIB(text, file.name);
@@ -126,6 +133,8 @@ export default function App() {
           idx === baseIdx + pi ? { ...entry, status: "failed", error: e.message || "Unknown error" } : entry
         ));
       }
+      setProgressCurrent(pi + 1);
+      await new Promise(r => setTimeout(r, 0)); // yield to React for re-render
     }
 
     if (newReports.length) {
@@ -254,26 +263,70 @@ export default function App() {
           {/* UPLOAD */}
           {view !== "explainer" && (view === "upload" || !reports.length) && (
             <div style={{ maxWidth: 650, margin: "40px auto" }}>
-              <div onDragOver={e => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)} onDrop={e => { e.preventDefault(); setDragOver(false); processFiles(e.dataTransfer.files); }}
-                style={{ border: "2px dashed " + (dragOver ? "#0ea5e9" : "#cbd5e1"), borderRadius: 16, padding: "50px 40px", textAlign: "center", background: dragOver ? "#f0f9ff" : "#fff", cursor: "pointer", transition: "all 0.2s" }}
-                onClick={() => fileRef.current?.click()}>
-                <div style={{ fontSize: 40, marginBottom: 12, filter: dragOver ? "drop-shadow(0 0 8px rgba(14,165,233,0.5))" : "none" }}>{"\uD83D\uDD2C"}</div>
-                <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6, color: "#0c4a6e" }}>Upload CIB Reports</h2>
-                <p style={{ color: "#64748b", fontSize: 13, marginBottom: 14 }}>Drag & drop Bangladesh Bank CIB PDFs, or click to browse</p>
-                <button onClick={e => { e.stopPropagation(); fileRef.current?.click(); }} style={S.bp}>Select PDFs</button>
-                <input ref={fileRef} type="file" accept=".pdf" multiple onChange={e => { if (e.target.files.length) processFiles(e.target.files); }} style={{ display: "none" }} />
-              </div>
-              {fileLog.length > 0 && (
+              {processing ? (
+                /* ── PROGRESS BAR ── */
+                <div style={{ border: "2px solid #bae6fd", borderRadius: 16, padding: "40px 36px", textAlign: "center", background: "#f0f9ff" }}>
+                  <div style={{ fontSize: 36, marginBottom: 10 }}>{"\uD83D\uDD2C"}</div>
+                  <h2 style={{ fontSize: 17, fontWeight: 700, color: "#0c4a6e", marginBottom: 4 }}>Analyzing CIB Reports...</h2>
+                  <p style={{ color: "#64748b", fontSize: 12, marginBottom: 16 }}>
+                    {progressCurrent} / {progressTotal} completed ({progressTotal > 0 ? Math.round((progressCurrent / progressTotal) * 100) : 0}%)
+                  </p>
+                  {/* Progress bar track */}
+                  <div style={{ background: "#e0f2fe", borderRadius: 6, height: 12, overflow: "hidden", marginBottom: 14, border: "1px solid #bae6fd" }}>
+                    <div style={{
+                      width: progressTotal > 0 ? ((progressCurrent / progressTotal) * 100) + "%" : "0%",
+                      height: "100%",
+                      background: "linear-gradient(90deg, #0ea5e9, #38bdf8)",
+                      borderRadius: 6,
+                      transition: "width 0.3s ease",
+                      position: "relative",
+                      overflow: "hidden",
+                    }}>
+                      {/* Shimmer animation */}
+                      <div style={{
+                        position: "absolute", inset: 0,
+                        background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)",
+                        animation: "shimmer 1.5s infinite",
+                      }} />
+                    </div>
+                  </div>
+                  <style>{`@keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }`}</style>
+                  {/* Current file */}
+                  {currentFileName && (
+                    <p style={{ fontSize: 11, color: "#0369a1", marginBottom: 10, fontFamily: "monospace" }}>
+                      {progressCurrent < progressTotal ? "\u25B6 " : "\u2713 "}{currentFileName}
+                    </p>
+                  )}
+                  {/* Running tally */}
+                  <div style={{ display: "flex", justifyContent: "center", gap: 16, fontSize: 11.5, color: "#475569" }}>
+                    <span style={{ color: "#059669", fontWeight: 600 }}>{"\u2713"} {fileLog.filter(f => f.status === "success").length} analyzed</span>
+                    {fileLog.filter(f => f.status === "failed").length > 0 && (
+                      <span style={{ color: "#dc2626", fontWeight: 600 }}>{"\u2717"} {fileLog.filter(f => f.status === "failed").length} failed</span>
+                    )}
+                    <span style={{ color: "#0ea5e9" }}>{"\u25CB"} {fileLog.filter(f => f.status === "processing").length} pending</span>
+                  </div>
+                </div>
+              ) : (
+                /* ── NORMAL UPLOAD ZONE ── */
+                <div onDragOver={e => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)} onDrop={e => { e.preventDefault(); setDragOver(false); processFiles(e.dataTransfer.files); }}
+                  style={{ border: "2px dashed " + (dragOver ? "#0ea5e9" : "#cbd5e1"), borderRadius: 16, padding: "50px 40px", textAlign: "center", background: dragOver ? "#f0f9ff" : "#fff", cursor: "pointer", transition: "all 0.2s" }}
+                  onClick={() => fileRef.current?.click()}>
+                  <div style={{ fontSize: 40, marginBottom: 12, filter: dragOver ? "drop-shadow(0 0 8px rgba(14,165,233,0.5))" : "none" }}>{"\uD83D\uDD2C"}</div>
+                  <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6, color: "#0c4a6e" }}>Upload CIB Reports</h2>
+                  <p style={{ color: "#64748b", fontSize: 13, marginBottom: 14 }}>Drag & drop Bangladesh Bank CIB PDFs, or click to browse</p>
+                  <button onClick={e => { e.stopPropagation(); fileRef.current?.click(); }} style={S.bp}>Select PDFs</button>
+                  <input ref={fileRef} type="file" accept=".pdf" multiple onChange={e => { if (e.target.files.length) processFiles(e.target.files); }} style={{ display: "none" }} />
+                </div>
+              )}
+              {fileLog.length > 0 && !processing && (
                 <div style={{ ...S.card, marginTop: 14, fontFamily: "monospace", fontSize: 11.5, lineHeight: 1.8, maxHeight: 280, overflow: "auto" }}>
                   {fileLog.slice(-20).map((entry, i) => (
                     <div key={i} style={{ color: entry.status === "success" ? "#059669" : entry.status === "failed" ? "#dc2626" : "#3b82f6" }}>
                       {entry.status === "success" ? "\u2713" : entry.status === "failed" ? "\u2717" : "\u25CB"} {entry.fileName}
                       {entry.status === "success" && " \u2192 " + entry.reportNo + ": " + entry.name}
                       {entry.status === "failed" && " \u2014 " + entry.error}
-                      {entry.status === "processing" && " ...processing"}
                     </div>
                   ))}
-                  {processing && <div style={{ color: "#0ea5e9" }}>Processing...</div>}
                 </div>
               )}
             </div>
