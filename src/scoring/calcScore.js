@@ -37,7 +37,7 @@ export function calcScore(facs) {
   const hasNF = live.some(f => f.nature === "Non-Funded");
   const ms = hasFun && hasNF ? 100 : hasFun ? 55 : hasNF ? 30 : 50;
 
-  const baseScore = Math.round(os * 0.50 + us * 0.40 + ms * 0.10);
+  const baseScore = Math.round(os * 0.60 + us * 0.30 + ms * 0.10);
 
   // Classification Penalty: up to -50 pts
   let tpw = 0, wp = 0;
@@ -106,8 +106,8 @@ export function calcScore(facs) {
   return {
     total: raw, override,
     bd: {
-      "Overdue History": { s: os, w: 50, pts: Math.round(os * 0.50) },
-      "Utilization (lower=better)": { s: us, w: 40, pts: Math.round(us * 0.40) },
+      "Overdue History": { s: os, w: 60, pts: Math.round(os * 0.60) },
+      "Utilization (lower=better)": { s: us, w: 30, pts: Math.round(us * 0.30) },
       "Facility Mix": { s: ms, w: 10, pts: Math.round(ms * 0.10) },
       "Classification Penalty": { s: -Math.round(ap * 100), w: -50, pts: -pp, isPenalty: true },
     },

@@ -3,7 +3,7 @@ import { BANDS } from '../../constants/bands';
 const FACTORS = [
   {
     name: "Overdue History",
-    weight: "50%",
+    weight: "60%",
     desc: "Measures overdue exposure relative to total outstanding on live funded facilities.",
     table: [
       ["0%", "100", "No overdue — perfect repayment discipline"],
@@ -17,7 +17,7 @@ const FACTORS = [
   },
   {
     name: "Utilization Ratio",
-    weight: "40%",
+    weight: "30%",
     desc: "Measures how much of sanctioned limits are drawn. Lower utilization = better headroom and lower risk.",
     table: [
       ["≤ 10%", "100", "Minimal draw — maximum headroom"],
@@ -114,7 +114,7 @@ export default function ScoreExplainer({ onBack }) {
       <div style={s.section}>
         <h2 style={s.h2}>Score Formula</h2>
         <div style={s.formula}>
-          <strong>Base Score</strong> = (Overdue History × 0.50) + (Utilization × 0.40) + (Facility Mix × 0.10)<br />
+          <strong>Base Score</strong> = (Overdue History × 0.60) + (Utilization × 0.30) + (Facility Mix × 0.10)<br />
           <strong>Final Score</strong> = Base Score − Classification Penalty (up to −50 pts)<br />
           <strong>Range:</strong> 0 – 100 &nbsp;|&nbsp; Higher = Lower Risk
         </div>
