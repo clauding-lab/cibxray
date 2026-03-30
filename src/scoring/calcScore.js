@@ -107,7 +107,7 @@ export function calcScore(facs) {
     total: raw, override,
     bd: {
       "Overdue History": { s: os, w: 60, pts: Math.round(os * 0.60) },
-      "Utilization (lower=better)": { s: us, w: 30, pts: Math.round(us * 0.30) },
+      "Utilization (high utilization=low score)": { s: us, w: 30, pts: Math.round(us * 0.30) },
       "Facility Mix": { s: ms, w: 10, pts: Math.round(ms * 0.10) },
       "Classification Penalty": { s: -Math.round(ap * 100), w: -50, pts: -pp, isPenalty: true },
     },
