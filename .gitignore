@@ -31,3 +31,4 @@ public/*.pdf
 
 # Claude config
 .claude/
+.vercel
