@@ -15,9 +15,15 @@ const phaseMap = s => {
   return "Terminated";
 };
 
-const facilityNature = type => {
-  const l = type.toLowerCase();
-  if (l.includes("guarantee") || l.includes("letter of credit") || l.includes("other indirect") || l.includes("non funded")) return "Non-Funded";
+const facilityNature = desc => {
+  const l = desc.toLowerCase();
+  if (
+    l.includes("guarantee") ||
+    l.includes("letter of credit") ||
+    l.includes("other indirect") ||
+    l.includes("non funded") ||
+    l.includes("non-funded")
+  ) return "Non-Funded";
   return "Funded";
 };
 
@@ -176,9 +182,13 @@ export function parseBBCIB(text, fileName) {
     const phaseMatch = block.match(/Phase:\s*(Living|Terminated(?:\s+in\s+advance)?)/i);
     const phase = phaseMatch ? phaseMap(phaseMatch[1]) : "Terminated";
 
-    const facMatch = block.match(/Facility:\s*(.+?)(?:\s{2,}|Date of)/);
-    let facType = facMatch ? facMatch[1].trim() : "Other";
-    facType = facType.replace(/\s+/g, " ").replace(/\(non\s*funded\)/i, "").replace(/\(Revolving\)/i, "").trim();
+    // Facility description wraps across lines in side-by-side-column layouts
+    // (e.g. "Facility: Letter of\ncredit (non\nfunded)"), so capture the
+    // whole description up to the next known field label before classifying.
+    const facMatch = block.match(/Facility:([\s\S]{0,200}?)(?:Date of last payment|Starting date:)/i);
+    const facDesc = (facMatch ? facMatch[1] : "").replace(/\s+/g, " ").trim();
+    const nature = facilityNature(facDesc);
+    let facType = facDesc.replace(/\(non\s*funded\)/i, "").replace(/\(Revolving\)/i, "").trim() || "Other";
 
     const slMatch = block.match(/Sanction Limit:\s*([\d,]+)/);
     const creditLimMatch = block.match(/Credit limit:\s*([\d,]+)/);
@@ -266,7 +276,7 @@ export function parseBBCIB(text, fileName) {
       institution,
       fiCode,
       type: facType,
-      nature: facilityNature(facType),
+      nature,
       limit: latestLimit || sanctionLimit,
       outstanding: latestOutstanding,
       overdue: latestOverdue,
