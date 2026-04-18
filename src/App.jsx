@@ -18,6 +18,7 @@ import ScoreBlock from './components/report/ScoreBlock.jsx';
 import BreakdownBars from './components/report/BreakdownBars.jsx';
 import FacilityTable from './components/report/FacilityTable.jsx';
 import AuditStamp from './components/AuditStamp.jsx';
+import PrintReport from './components/PrintReport.jsx';
 
 const getBorrowerFacs = (r) => r.facilities.filter(f => f.role === "Borrower" || f.role === "CoBorrower");
 
@@ -55,6 +56,10 @@ function ParseQualityBanner({ pq }) {
 }
 
 export default function App() {
+  if (typeof window !== 'undefined' && window.location.hash === '#print') {
+    return <PrintReport />;
+  }
+
   const [reports, setReports] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [view, setView] = useState("upload");
@@ -106,6 +111,12 @@ export default function App() {
   const navTo = (v, id, t) => {
     setView(v); setActiveId(id); if (t) setTab(t);
     if (isMobile) setSideOpen(false);
+  };
+
+  const handlePrint = (report, score, band) => {
+    const payload = JSON.stringify({ report, score, band });
+    sessionStorage.setItem('cibxray.printPayload', payload);
+    window.open('/#print', '_blank', 'noopener,noreferrer');
   };
 
   const TABS = [
@@ -493,6 +504,31 @@ export default function App() {
                     {/* Score card — only show if there are borrower facilities */}
                     {active.parseQuality?.tier !== 'major' && borrowerFacs.length > 0 && (
                       <ScoreBlock score={scActive} band={b} dataTierNote={scActive?.dataTierNote} variant="screen" />
+                    )}
+
+                    {active?.stamp && (
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+                        <button
+                          type="button"
+                          onClick={() => handlePrint(active, scActive, b)}
+                          disabled={active?.parseQuality?.tier === 'major'}
+                          title={active?.parseQuality?.tier === 'major'
+                            ? 'Score hidden due to parse mismatch. Print not available.'
+                            : 'Open printable 1-page summary'}
+                          style={{
+                            padding: '6px 14px',
+                            borderRadius: 6,
+                            border: '1px solid #0f172a',
+                            background: active?.parseQuality?.tier === 'major' ? '#e2e8f0' : '#0f172a',
+                            color: active?.parseQuality?.tier === 'major' ? '#64748b' : 'white',
+                            cursor: active?.parseQuality?.tier === 'major' ? 'not-allowed' : 'pointer',
+                            fontSize: 12,
+                            fontWeight: 500,
+                          }}
+                        >
+                          Print report
+                        </button>
+                      </div>
                     )}
 
                     {/* Subject profile */}
