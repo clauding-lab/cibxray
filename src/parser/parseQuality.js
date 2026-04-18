@@ -6,8 +6,12 @@ export function assessParseQuality(report) {
     return { tier: 'unavailable', issues: [] };
   }
 
+  // Exclude guarantor positions — the summary's totalOutstanding / totalOverdue
+  // reflects only facilities where the subject is the borrower (or co-borrower).
+  // Guarantor exposure appears on the subject's CIB report but is NOT part of
+  // the headline totals the reconciliation compares against.
   const liveFunded = (report.facilities || []).filter(
-    f => f.status === 'Live' && f.nature === 'Funded'
+    f => f.status === 'Live' && f.nature === 'Funded' && f.role !== 'Guarantor'
   );
   const facOutstanding = liveFunded.reduce((s, f) => s + (Number(f.outstanding) || 0), 0);
   const facOverdue = liveFunded.reduce((s, f) => s + (Number(f.overdue) || 0), 0);
