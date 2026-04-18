@@ -82,9 +82,13 @@ export default function App() {
   };
 
   const handlePrint = (report, score, band) => {
-    const payload = JSON.stringify({ report, score, band });
-    sessionStorage.setItem('cibxray.printPayload', payload);
-    window.open('/#print', '_blank', 'noopener,noreferrer');
+    // localStorage (not sessionStorage) so the handoff survives the
+    // new-tab boundary — sessionStorage is NOT inherited when the new
+    // window is opened via window.open(). writtenAt lets PrintReport
+    // ignore stale payloads from an abandoned earlier click.
+    const payload = JSON.stringify({ writtenAt: Date.now(), report, score, band });
+    localStorage.setItem('cibxray.printPayload', payload);
+    window.open('/#print', '_blank');
   };
 
   const TABS = [

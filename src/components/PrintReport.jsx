@@ -5,7 +5,8 @@ import FacilityTable from './report/FacilityTable.jsx';
 import ParseQualityBanner from './report/ParseQualityBanner.jsx';
 import AuditStamp from './AuditStamp.jsx';
 
-const SESSION_KEY = 'cibxray.printPayload';
+const STORAGE_KEY = 'cibxray.printPayload';
+const STALE_AFTER_MS = 10_000; // payload must have been written within the last 10s
 
 const pageStyle = {
   width: '188mm',
@@ -46,12 +47,23 @@ export default function PrintReport() {
 
   useEffect(() => {
     try {
-      const raw = sessionStorage.getItem(SESSION_KEY);
+      const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) {
         setError('No report to print. Re-upload the PDF.');
         return;
       }
-      setPayload(JSON.parse(raw));
+      const parsed = JSON.parse(raw);
+      const age = Date.now() - (parsed.writtenAt || 0);
+      if (age > STALE_AFTER_MS) {
+        // Stale handoff (user reloaded /#print, or opened it directly).
+        localStorage.removeItem(STORAGE_KEY);
+        setError('No report to print. Re-upload the PDF.');
+        return;
+      }
+      // Consume: remove immediately so a reload shows the error state,
+      // not a second print of the same payload.
+      localStorage.removeItem(STORAGE_KEY);
+      setPayload(parsed);
     } catch (e) {
       setError('Could not load report data.');
     }
@@ -59,13 +71,8 @@ export default function PrintReport() {
 
   useEffect(() => {
     if (!payload) return;
-    const handleBeforeUnload = () => sessionStorage.removeItem(SESSION_KEY);
-    window.addEventListener('beforeunload', handleBeforeUnload);
     const timer = setTimeout(() => window.print(), 300);
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      clearTimeout(timer);
-    };
+    return () => clearTimeout(timer);
   }, [payload]);
 
   if (error) {
