@@ -16,14 +16,14 @@ export function calcScore(facs) {
   const tOut = liveFunded.reduce((s, f) => s + (f.outstanding || 0), 0);
   const tOver = liveFunded.reduce((s, f) => s + (f.overdue || 0), 0);
 
-  // Factor 1: Overdue History (50%)
+  // Factor 1: Overdue History (60%)
   let os = 100;
   if (tOut > 0) {
     const r = tOver / tOut;
     os = r === 0 ? 100 : r <= 0.02 ? 85 : r <= 0.05 ? 65 : r <= 0.10 ? 40 : r <= 0.20 ? 20 : r <= 0.30 ? 8 : 0;
   }
 
-  // Factor 2: Utilization Ratio (40%)
+  // Factor 2: Utilization Ratio (30%)
   let us = 100;
   if (tLim > 0) {
     const r = tOut / tLim;
