@@ -1,3 +1,5 @@
+export const config = { runtime: 'nodejs' };
+
 export default async function handler(request) {
   return new Response(null, {
     status: 302,

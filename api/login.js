@@ -1,5 +1,7 @@
 import { buildSession, verifyPassword, renderLoginHtml } from '../lib/session.js';
 
+export const config = { runtime: 'nodejs' };
+
 const COOKIE_MAX_AGE_SECONDS = 48 * 3600;
 
 export default async function handler(request) {
