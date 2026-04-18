@@ -5,6 +5,7 @@ import { S } from './constants/theme';
 import { fmt } from './utils/format';
 import { calcScore } from './scoring/calcScore';
 import { parseBBCIB } from './parser/parseBBCIB';
+import { assessParseQuality } from './parser/parseQuality';
 import { pdfToText } from './parser/pdfToText';
 import { doExport } from './export/excelExport';
 import Gauge from './components/shared/Gauge';
@@ -14,6 +15,39 @@ import RepaymentChart from './components/shared/RepaymentChart';
 import ScoreExplainer from './components/shared/ScoreExplainer';
 
 const getBorrowerFacs = (r) => r.facilities.filter(f => f.role === "Borrower" || f.role === "CoBorrower");
+
+function ParseQualityBanner({ pq }) {
+  if (!pq || pq.tier === 'ok') return null;
+  const fmtN = (n) => new Intl.NumberFormat('en-IN').format(n);
+  const describe = (issue) =>
+    `${issue.field === 'outstanding' ? 'Outstanding' : 'Overdue'}: summary says BDT ${fmtN(issue.summaryValue)}, facilities total BDT ${fmtN(issue.computedValue)} (gap BDT ${fmtN(issue.gap)}).`;
+
+  if (pq.tier === 'unavailable') {
+    return (
+      <div style={{ margin: '12px 0', padding: '12px 14px', background: '#fef3c7', border: '1px solid #fbbf24', borderRadius: 8, color: '#78350f', fontSize: 13 }}>
+        Could not locate summary section in this PDF. Cross-check with the facility table skipped.
+      </div>
+    );
+  }
+
+  if (pq.tier === 'minor') {
+    return (
+      <div style={{ margin: '12px 0', padding: '12px 14px', background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: 8, color: '#78350f', fontSize: 13 }}>
+        <div style={{ fontWeight: 700, marginBottom: 4 }}>Minor parse mismatch — score shown but verify</div>
+        {pq.issues.map((i, idx) => <div key={idx}>{describe(i)}</div>)}
+      </div>
+    );
+  }
+
+  // major
+  return (
+    <div style={{ margin: '12px 0', padding: '16px 18px', background: '#fee2e2', border: '2px solid #dc2626', borderRadius: 8, color: '#7f1d1d' }}>
+      <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 6 }}>Cannot score — parse incomplete</div>
+      {pq.issues.map((i, idx) => <div key={idx} style={{ fontSize: 13, marginBottom: 2 }}>{describe(i)}</div>)}
+      <div style={{ fontSize: 12, marginTop: 8, color: '#991b1b' }}>Please re-upload the PDF or verify manually with the original CIB.</div>
+    </div>
+  );
+}
 
 export default function App() {
   const [reports, setReports] = useState([]);
@@ -120,6 +154,8 @@ export default function App() {
           throw new Error("No subject or facility data extracted. File may not be a valid BB CIB report.");
         }
 
+        parsed.parseQuality = assessParseQuality(parsed);
+
         newReports.push(parsed);
         setFileLog(prev => prev.map((entry, idx) =>
           idx === baseIdx + pi ? {
@@ -129,8 +165,11 @@ export default function App() {
           } : entry
         ));
       } catch (e) {
+        const userMessage = e.message === 'SCANNED_PDF'
+          ? 'This looks like a scanned image. Please upload the text-based PDF from Bangladesh Bank, not a scan.'
+          : e.message || "Unknown error";
         setFileLog(prev => prev.map((entry, idx) =>
-          idx === baseIdx + pi ? { ...entry, status: "failed", error: e.message || "Unknown error" } : entry
+          idx === baseIdx + pi ? { ...entry, status: "failed", error: userMessage } : entry
         ));
       }
       setProgressCurrent(pi + 1);
@@ -442,8 +481,10 @@ export default function App() {
                       );
                     })()}
 
+                    <ParseQualityBanner pq={active.parseQuality} />
+
                     {/* Score card — only show if there are borrower facilities */}
-                    {borrowerFacs.length > 0 && (
+                    {active.parseQuality?.tier !== 'major' && borrowerFacs.length > 0 && (
                     <div style={{ ...S.card, display: "flex", alignItems: "center", gap: 18, background: b.bg, border: "1px solid " + b.color + "22" }}>
                       <Gauge score={scActive.total} override={scActive.override} />
                       <div style={{ flex: 1 }}>
@@ -454,7 +495,13 @@ export default function App() {
                     </div>
                     )}
 
-                    {borrowerFacs.length > 0 && (
+                    {active.parseQuality?.tier !== 'major' && borrowerFacs.length > 0 && scActive?.dataTierNote && (
+                      <div style={{ margin: '8px 0', padding: '10px 12px', background: '#eff6ff', border: '1px solid #93c5fd', borderRadius: 8, color: '#1e40af', fontSize: 12 }}>
+                        {scActive.dataTierNote}
+                      </div>
+                    )}
+
+                    {active.parseQuality?.tier !== 'major' && borrowerFacs.length > 0 && (
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 8, marginBottom: 12 }}>
                       {[["Live Facs", scActive.agg.live], ["Total Limit", "\u09F3" + fmt(scActive.agg.tLim)], ["Outstanding", "\u09F3" + fmt(scActive.agg.tOut)], ["Overdue", "\u09F3" + fmt(scActive.agg.tOver)], ["Utilization", (scActive.agg.util * 100).toFixed(0) + "%"]].map(([l, v], idx) => (
                         <div key={l} style={{ background: "#fff", borderRadius: 8, padding: "10px 12px", border: "1px solid #e2e8f0" }}>

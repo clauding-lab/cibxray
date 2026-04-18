@@ -1,12 +1,50 @@
-import { CLS } from '../constants/classifications';
-import { fmt } from '../utils/format';
+import { CLS } from '../constants/classifications.js';
+import { fmt } from '../utils/format.js';
+
+function clampNum(v) {
+  const n = Number(v);
+  if (!Number.isFinite(n) || n < 0) return 0;
+  return n;
+}
+
+const FIRST_TIMER_NOTE = 'First-time funded borrower / no repayment history. Use business judgment.';
 
 export function calcScore(facs) {
   if (!facs.length) return {
-    total: 0, override: null, bd: {},
-    agg: { tLim: 0, tOut: 0, tOver: 0, funded: 0, live: 0, hist: 0, total: 0, util: 0, baseScore: 0 },
+    total: 65, override: null, bd: {},
+    agg: { tLim: 0, tOut: 0, tOver: 0, funded: 0, live: 0, hist: 0, total: 0, util: 0, baseScore: 65 },
     flags: [],
+    dataTier: 'first-timer', dataTierNote: FIRST_TIMER_NOTE,
   };
+
+  facs = facs.map(f => ({
+    ...f,
+    limit: clampNum(f.limit),
+    outstanding: clampNum(f.outstanding),
+    overdue: clampNum(f.overdue),
+  }));
+
+  const liveFundedEarly = facs.filter(f => f.nature === 'Funded' && f.status === 'Live');
+  const histFundedEarly = facs.filter(f => f.nature === 'Funded' && f.status !== 'Live');
+
+  if (liveFundedEarly.length === 0 && histFundedEarly.length === 0) {
+    return {
+      total: 65, override: null, bd: {},
+      agg: { tLim: 0, tOut: 0, tOver: 0, funded: 0, live: facs.filter(f => f.status === 'Live').length, hist: facs.filter(f => f.status !== 'Live').length, total: facs.length, util: 0, baseScore: 65 },
+      flags: [],
+      dataTier: 'first-timer', dataTierNote: FIRST_TIMER_NOTE,
+    };
+  }
+
+  const HISTORICAL_CLEAN_NOTE = 'Based on historical repayment only. No current funded exposure.';
+  if (liveFundedEarly.length === 0 && histFundedEarly.every(f => f.classification === 'UC' || f.classification === 'STD')) {
+    return {
+      total: 80, override: null, bd: {},
+      agg: { tLim: 0, tOut: 0, tOver: 0, funded: histFundedEarly.length, live: 0, hist: histFundedEarly.length, total: facs.length, util: 0, baseScore: 80 },
+      flags: [{ ok: true, t: 'Historical clean', d: 'All past funded facilities closed with standard classification.' }],
+      dataTier: 'historical-clean', dataTierNote: HISTORICAL_CLEAN_NOTE,
+    };
+  }
 
   const live = facs.filter(f => f.status === "Live");
   const hist = facs.filter(f => f.status !== "Live");
@@ -113,5 +151,6 @@ export function calcScore(facs) {
     },
     agg: { tLim, tOut, tOver, funded: funded.length, live: live.length, hist: hist.length, total: facs.length, util: tLim > 0 ? tOut / tLim : 0, baseScore },
     flags,
+    dataTier: 'live', dataTierNote: null,
   };
 }
