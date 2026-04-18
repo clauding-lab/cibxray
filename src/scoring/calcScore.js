@@ -1,5 +1,11 @@
-import { CLS } from '../constants/classifications';
-import { fmt } from '../utils/format';
+import { CLS } from '../constants/classifications.js';
+import { fmt } from '../utils/format.js';
+
+function clampNum(v) {
+  const n = Number(v);
+  if (!Number.isFinite(n) || n < 0) return 0;
+  return n;
+}
 
 export function calcScore(facs) {
   if (!facs.length) return {
@@ -7,6 +13,13 @@ export function calcScore(facs) {
     agg: { tLim: 0, tOut: 0, tOver: 0, funded: 0, live: 0, hist: 0, total: 0, util: 0, baseScore: 0 },
     flags: [],
   };
+
+  facs = facs.map(f => ({
+    ...f,
+    limit: clampNum(f.limit),
+    outstanding: clampNum(f.outstanding),
+    overdue: clampNum(f.overdue),
+  }));
 
   const live = facs.filter(f => f.status === "Live");
   const hist = facs.filter(f => f.status !== "Live");
