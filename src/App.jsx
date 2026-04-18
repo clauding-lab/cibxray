@@ -495,6 +495,12 @@ export default function App() {
                     </div>
                     )}
 
+                    {active.parseQuality?.tier !== 'major' && borrowerFacs.length > 0 && scActive?.dataTierNote && (
+                      <div style={{ margin: '8px 0', padding: '10px 12px', background: '#eff6ff', border: '1px solid #93c5fd', borderRadius: 8, color: '#1e40af', fontSize: 12 }}>
+                        {scActive.dataTierNote}
+                      </div>
+                    )}
+
                     {active.parseQuality?.tier !== 'major' && borrowerFacs.length > 0 && (
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 8, marginBottom: 12 }}>
                       {[["Live Facs", scActive.agg.live], ["Total Limit", "\u09F3" + fmt(scActive.agg.tLim)], ["Outstanding", "\u09F3" + fmt(scActive.agg.tOut)], ["Overdue", "\u09F3" + fmt(scActive.agg.tOver)], ["Utilization", (scActive.agg.util * 100).toFixed(0) + "%"]].map(([l, v], idx) => (
