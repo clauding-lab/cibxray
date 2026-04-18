@@ -17,6 +17,7 @@ import ScoreExplainer from './components/shared/ScoreExplainer';
 import ScoreBlock from './components/report/ScoreBlock.jsx';
 import BreakdownBars from './components/report/BreakdownBars.jsx';
 import FacilityTable from './components/report/FacilityTable.jsx';
+import AuditStamp from './components/AuditStamp.jsx';
 
 const getBorrowerFacs = (r) => r.facilities.filter(f => f.role === "Borrower" || f.role === "CoBorrower");
 
@@ -535,6 +536,8 @@ export default function App() {
                     {borrowerFacs.length > 0 && (
                       <BreakdownBars score={scActive} variant="screen" />
                     )}
+
+                    {active?.stamp && <AuditStamp stamp={active.stamp} />}
                   </div>
                 )}
 
