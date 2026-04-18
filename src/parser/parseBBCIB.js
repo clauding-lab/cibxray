@@ -1,4 +1,4 @@
-import { CLS } from '../constants/classifications';
+import { CLS } from '../constants/classifications.js';
 
 const parseNum = s => parseInt(String(s).replace(/,/g, "")) || 0;
 

@@ -6,15 +6,19 @@ export function assessParseQuality(report) {
     return { tier: 'unavailable', issues: [] };
   }
 
-  // Exclude guarantor positions — the summary's totalOutstanding / totalOverdue
-  // reflects only facilities where the subject is the borrower (or co-borrower).
-  // Guarantor exposure appears on the subject's CIB report but is NOT part of
-  // the headline totals the reconciliation compares against.
-  const liveFunded = (report.facilities || []).filter(
-    f => f.status === 'Live' && f.nature === 'Funded' && f.role !== 'Guarantor'
+  // The summary's totalOutstanding / totalOverdue covers ALL live credit
+  // exposure on the subject — funded (OD/CC/TL) AND non-funded (LC/BG/BLW) —
+  // but only where the subject is the borrower or co-borrower. Guarantor
+  // positions appear on the CIB but are NOT counted in the headline totals.
+  // Reconciliation therefore sums: status=Live AND role!=Guarantor, including
+  // both Funded and Non-Funded natures. (Scoring, in contrast, uses only
+  // Funded — that is correct and unchanged; credit-risk scoring treats
+  // contingent non-funded exposure differently from principal obligations.)
+  const liveSubject = (report.facilities || []).filter(
+    f => f.status === 'Live' && f.role !== 'Guarantor'
   );
-  const facOutstanding = liveFunded.reduce((s, f) => s + (Number(f.outstanding) || 0), 0);
-  const facOverdue = liveFunded.reduce((s, f) => s + (Number(f.overdue) || 0), 0);
+  const facOutstanding = liveSubject.reduce((s, f) => s + (Number(f.outstanding) || 0), 0);
+  const facOverdue = liveSubject.reduce((s, f) => s + (Number(f.overdue) || 0), 0);
 
   const issues = [];
   for (const check of [
