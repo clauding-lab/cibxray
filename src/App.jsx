@@ -416,26 +416,47 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Tab bar */}
-                <div style={{ display: "flex", gap: 1, borderBottom: "1px solid #e2e8f0", marginBottom: 16, overflowX: "auto", overflowY: "hidden", minHeight: 38 }}>
-                  {TABS.map(t => {
-                    const count = t.key === "borrower" ? borrowerFacs.length : t.key === "guarantor" ? guarantorFacs.length : t.key === "linked" ? active.relatedConcerns.length : t.key === "redflags" ? redFlagCount : null;
-                    const isRedFlag = t.key === "redflags" && redFlagCount > 0;
-                    return (
-                      <button key={t.key} onClick={() => setTab(t.key)} style={{
-                        ...tabStyle(tab === t.key),
-                        color: isRedFlag && tab !== t.key ? "#dc2626" : tabStyle(tab === t.key).color,
-                      }}>
-                        {t.label}
-                        {count !== null && count > 0 && (
-                          t.key === "redflags"
-                            ? <span style={{ marginLeft: 5, background: "#dc2626", color: "#fff", fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 8, verticalAlign: "middle" }}>{count}</span>
-                            : <span style={{ marginLeft: 3, color: "#94a3b8" }}> ({count})</span>
-                        )}
-                        {t.key === "redflags" && count === 0 && <span style={{ marginLeft: 3, color: "#94a3b8" }}> (0)</span>}
-                      </button>
-                    );
-                  })}
+                {/* Tab bar + report-level actions */}
+                <div style={{ display: "flex", alignItems: "flex-end", gap: 12, borderBottom: "1px solid #e2e8f0", marginBottom: 16, minHeight: 38 }}>
+                  <div style={{ display: "flex", gap: 1, overflowX: "auto", overflowY: "hidden", flex: 1 }}>
+                    {TABS.map(t => {
+                      const count = t.key === "borrower" ? borrowerFacs.length : t.key === "guarantor" ? guarantorFacs.length : t.key === "linked" ? active.relatedConcerns.length : t.key === "redflags" ? redFlagCount : null;
+                      const isRedFlag = t.key === "redflags" && redFlagCount > 0;
+                      return (
+                        <button key={t.key} onClick={() => setTab(t.key)} style={{
+                          ...tabStyle(tab === t.key),
+                          color: isRedFlag && tab !== t.key ? "#dc2626" : tabStyle(tab === t.key).color,
+                        }}>
+                          {t.label}
+                          {count !== null && count > 0 && (
+                            t.key === "redflags"
+                              ? <span style={{ marginLeft: 5, background: "#dc2626", color: "#fff", fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 8, verticalAlign: "middle" }}>{count}</span>
+                              : <span style={{ marginLeft: 3, color: "#94a3b8" }}> ({count})</span>
+                          )}
+                          {t.key === "redflags" && count === 0 && <span style={{ marginLeft: 3, color: "#94a3b8" }}> (0)</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {active?.stamp && (
+                    <button
+                      type="button"
+                      onClick={() => handlePrint(active, scActive, b)}
+                      disabled={active?.parseQuality?.tier === 'major'}
+                      title={active?.parseQuality?.tier === 'major'
+                        ? 'Score hidden due to parse mismatch. Print not available.'
+                        : 'Open printable 1-page summary'}
+                      style={{
+                        ...S.bo,
+                        marginBottom: 6,
+                        whiteSpace: "nowrap",
+                        opacity: active?.parseQuality?.tier === 'major' ? 0.5 : 1,
+                        cursor: active?.parseQuality?.tier === 'major' ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      Print report
+                    </button>
+                  )}
                 </div>
 
                 {/* SUMMARY TAB */}
@@ -476,31 +497,6 @@ export default function App() {
                     {/* Score card — only show if there are borrower facilities */}
                     {active.parseQuality?.tier !== 'major' && borrowerFacs.length > 0 && (
                       <ScoreBlock score={scActive} band={b} dataTierNote={scActive?.dataTierNote} variant="screen" />
-                    )}
-
-                    {active?.stamp && (
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
-                        <button
-                          type="button"
-                          onClick={() => handlePrint(active, scActive, b)}
-                          disabled={active?.parseQuality?.tier === 'major'}
-                          title={active?.parseQuality?.tier === 'major'
-                            ? 'Score hidden due to parse mismatch. Print not available.'
-                            : 'Open printable 1-page summary'}
-                          style={{
-                            padding: '6px 14px',
-                            borderRadius: 6,
-                            border: '1px solid #0f172a',
-                            background: active?.parseQuality?.tier === 'major' ? '#e2e8f0' : '#0f172a',
-                            color: active?.parseQuality?.tier === 'major' ? '#64748b' : 'white',
-                            cursor: active?.parseQuality?.tier === 'major' ? 'not-allowed' : 'pointer',
-                            fontSize: 12,
-                            fontWeight: 500,
-                          }}
-                        >
-                          Print report
-                        </button>
-                      </div>
                     )}
 
                     {/* Subject profile */}
