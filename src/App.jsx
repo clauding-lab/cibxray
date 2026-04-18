@@ -5,6 +5,7 @@ import { S } from './constants/theme';
 import { fmt } from './utils/format';
 import { calcScore } from './scoring/calcScore';
 import { parseBBCIB } from './parser/parseBBCIB';
+import { assessParseQuality } from './parser/parseQuality';
 import { pdfToText } from './parser/pdfToText';
 import { doExport } from './export/excelExport';
 import Gauge from './components/shared/Gauge';
@@ -119,6 +120,8 @@ export default function App() {
         if (!parsed.subject.name && !parsed.subject.tradeName && !parsed.subject.cibSubjectCode && !parsed.subject.nid && parsed.facilities.length === 0) {
           throw new Error("No subject or facility data extracted. File may not be a valid BB CIB report.");
         }
+
+        parsed.parseQuality = assessParseQuality(parsed);
 
         newReports.push(parsed);
         setFileLog(prev => prev.map((entry, idx) =>
