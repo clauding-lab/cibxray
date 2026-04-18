@@ -2,6 +2,7 @@ import { verifySession, renderLoginHtml } from './lib/session.js';
 
 export const config = {
   matcher: '/((?!api/).*)',
+  runtime: 'nodejs',
 };
 
 export default async function middleware(request) {
