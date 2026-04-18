@@ -36,6 +36,16 @@ export function calcScore(facs) {
     };
   }
 
+  const HISTORICAL_CLEAN_NOTE = 'Based on historical repayment only. No current funded exposure.';
+  if (liveFundedEarly.length === 0 && histFundedEarly.every(f => f.classification === 'UC' || f.classification === 'STD')) {
+    return {
+      total: 80, override: null, bd: {},
+      agg: { tLim: 0, tOut: 0, tOver: 0, funded: histFundedEarly.length, live: 0, hist: histFundedEarly.length, total: facs.length, util: 0, baseScore: 80 },
+      flags: [{ ok: true, t: 'Historical clean', d: 'All past funded facilities closed with standard classification.' }],
+      dataTier: 'historical-clean', dataTierNote: HISTORICAL_CLEAN_NOTE,
+    };
+  }
+
   const live = facs.filter(f => f.status === "Live");
   const hist = facs.filter(f => f.status !== "Live");
   const funded = facs.filter(f => f.nature === "Funded");
