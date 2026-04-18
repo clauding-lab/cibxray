@@ -4,22 +4,24 @@ export const config = { runtime: 'nodejs' };
 
 const COOKIE_MAX_AGE_SECONDS = 48 * 3600;
 
-export default async function handler(request) {
-  if (request.method !== 'POST') {
-    return new Response('Method Not Allowed', { status: 405 });
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    res.status(405).send('Method Not Allowed');
+    return;
   }
 
-  const contentType = request.headers.get('content-type') || '';
+  const contentType = req.headers['content-type'] || '';
   if (!contentType.includes('application/x-www-form-urlencoded')) {
-    return new Response('Bad Request', { status: 400 });
+    res.status(400).send('Bad Request');
+    return;
   }
 
-  const body = await request.text();
+  const body = typeof req.body === 'string' ? req.body : await readBody(req);
   const params = new URLSearchParams(body);
   const password = params.get('password');
 
   if (!password) {
-    return htmlResponse(renderLoginHtml('Enter the access code.'), 400);
+    return sendHtml(res, 400, renderLoginHtml('Enter the access code.'));
   }
 
   const expectedPassword = process.env.CIBXRAY_ACCESS_PASSWORD;
@@ -28,30 +30,31 @@ export default async function handler(request) {
   if (!expectedPassword || !secret) {
     const missing = !expectedPassword ? 'CIBXRAY_ACCESS_PASSWORD' : 'CIBXRAY_SESSION_SECRET';
     console.error(`[cibxray] Auth disabled: missing env var ${missing}`);
-    return htmlResponse(renderLoginHtml('Service misconfigured. Contact administrator.'), 500);
+    return sendHtml(res, 500, renderLoginHtml('Service misconfigured. Contact administrator.'));
   }
 
   if (!verifyPassword(password, expectedPassword)) {
-    return htmlResponse(renderLoginHtml('Incorrect access code.'), 401);
+    return sendHtml(res, 401, renderLoginHtml('Incorrect access code.'));
   }
 
   const token = buildSession(secret);
-  return new Response(null, {
-    status: 302,
-    headers: {
-      'Location': '/',
-      'Set-Cookie': `cibxray_session=${token}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${COOKIE_MAX_AGE_SECONDS}`,
-      'Cache-Control': 'no-store',
-    },
-  });
+  res.setHeader('Set-Cookie', `cibxray_session=${token}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${COOKIE_MAX_AGE_SECONDS}`);
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Location', '/');
+  res.status(302).end();
 }
 
-function htmlResponse(html, status) {
-  return new Response(html, {
-    status,
-    headers: {
-      'Content-Type': 'text/html; charset=utf-8',
-      'Cache-Control': 'no-store',
-    },
+function sendHtml(res, status, html) {
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-store');
+  res.status(status).send(html);
+}
+
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    let data = '';
+    req.on('data', chunk => { data += chunk; });
+    req.on('end', () => resolve(data));
+    req.on('error', reject);
   });
 }
