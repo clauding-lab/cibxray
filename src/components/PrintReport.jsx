@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import ScoreBlock from './report/ScoreBlock.jsx';
 import BreakdownBars from './report/BreakdownBars.jsx';
 import FacilityTable from './report/FacilityTable.jsx';
+import ParseQualityBanner from './report/ParseQualityBanner.jsx';
 import AuditStamp from './AuditStamp.jsx';
 
 const SESSION_KEY = 'cibxray.printPayload';
@@ -69,7 +70,7 @@ export default function PrintReport() {
 
   if (error) {
     return (
-      <div style={{ padding: 32, fontFamily: 'system-ui', textAlign: 'center' }}>
+      <div className="print-root" style={{ padding: 32, fontFamily: 'system-ui', textAlign: 'center' }}>
         <h2>Print unavailable</h2>
         <p>{error}</p>
         <p><a href="/">Return to CIBxRay</a></p>
@@ -99,8 +100,14 @@ export default function PrintReport() {
         <ScoreBlock score={score} band={band} dataTierNote={score?.dataTierNote} variant="print" />
       </section>
 
+      {report?.parseQuality && report.parseQuality.tier !== 'ok' && (
+        <section style={sectionGapStyle}>
+          <ParseQualityBanner pq={report.parseQuality} />
+        </section>
+      )}
+
       <section style={sectionGapStyle}>
-        <BreakdownBars score={score} variant="print" />
+        <BreakdownBars score={score} band={band} variant="print" />
       </section>
 
       <section style={{ ...sectionGapStyle, flex: 1 }}>

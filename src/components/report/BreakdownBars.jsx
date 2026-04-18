@@ -1,8 +1,7 @@
-import { S } from '../../constants/theme';
-import { getBand } from '../../constants/bands';
+import { S } from '../../constants/theme.js';
 
-export default function BreakdownBars({ score, variant = 'screen' }) {
-  const b = getBand(score.total, score.override);
+export default function BreakdownBars({ score, band, variant = 'screen' }) {
+  const b = band;
 
   return (
     <div data-testid="breakdown-bars" className={`breakdown-bars-${variant}`}>

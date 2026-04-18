@@ -1,6 +1,6 @@
-import { fmt } from '../../utils/format';
-import { S } from '../../constants/theme';
-import Gauge from '../shared/Gauge';
+import { fmt } from '../../utils/format.js';
+import { S } from '../../constants/theme.js';
+import Gauge from '../shared/Gauge.jsx';
 
 export default function ScoreBlock({ score, band, dataTierNote, variant = 'screen' }) {
   const b = band;
