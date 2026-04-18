@@ -11,7 +11,9 @@ export default async function middleware(request) {
   const secret = process.env.CIBXRAY_SESSION_SECRET;
 
   if (token && secret && verifySession(token, secret)) {
-    return;
+    return new Response(null, {
+      headers: { 'x-middleware-next': '1' },
+    });
   }
 
   return new Response(renderLoginHtml(), {
