@@ -6,6 +6,7 @@ import { fmt } from './utils/format';
 import { calcScore } from './scoring/calcScore';
 import { parseBBCIB } from './parser/parseBBCIB';
 import { assessParseQuality } from './parser/parseQuality';
+import { computeStamp } from './stamp/computeStamp.js';
 import { pdfToText } from './parser/pdfToText';
 import { doExport } from './export/excelExport';
 import Gauge from './components/shared/Gauge';
@@ -146,7 +147,8 @@ export default function App() {
       const file = pdfs[pi];
       setCurrentFileName(file.name);
       try {
-        const text = await pdfToText(file);
+        const buf = await file.arrayBuffer();
+        const text = await pdfToText(buf);
         const parsed = parseBBCIB(text, file.name);
         counter.current++;
         parsed.reportNo = "CIB-" + String(counter.current).padStart(3, "0");
@@ -158,6 +160,7 @@ export default function App() {
         }
 
         parsed.parseQuality = assessParseQuality(parsed);
+        parsed.stamp = await computeStamp(buf);
 
         newReports.push(parsed);
         setFileLog(prev => prev.map((entry, idx) =>
