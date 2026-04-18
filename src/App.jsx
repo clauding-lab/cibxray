@@ -129,8 +129,11 @@ export default function App() {
           } : entry
         ));
       } catch (e) {
+        const userMessage = e.message === 'SCANNED_PDF'
+          ? 'This looks like a scanned image. Please upload the text-based PDF from Bangladesh Bank, not a scan.'
+          : e.message || "Unknown error";
         setFileLog(prev => prev.map((entry, idx) =>
-          idx === baseIdx + pi ? { ...entry, status: "failed", error: e.message || "Unknown error" } : entry
+          idx === baseIdx + pi ? { ...entry, status: "failed", error: userMessage } : entry
         ));
       }
       setProgressCurrent(pi + 1);
