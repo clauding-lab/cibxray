@@ -7,11 +7,14 @@ function clampNum(v) {
   return n;
 }
 
+const FIRST_TIMER_NOTE = 'First-time funded borrower / no repayment history. Use business judgment.';
+
 export function calcScore(facs) {
   if (!facs.length) return {
-    total: 0, override: null, bd: {},
-    agg: { tLim: 0, tOut: 0, tOver: 0, funded: 0, live: 0, hist: 0, total: 0, util: 0, baseScore: 0 },
+    total: 65, override: null, bd: {},
+    agg: { tLim: 0, tOut: 0, tOver: 0, funded: 0, live: 0, hist: 0, total: 0, util: 0, baseScore: 65 },
     flags: [],
+    dataTier: 'first-timer', dataTierNote: FIRST_TIMER_NOTE,
   };
 
   facs = facs.map(f => ({
@@ -20,6 +23,18 @@ export function calcScore(facs) {
     outstanding: clampNum(f.outstanding),
     overdue: clampNum(f.overdue),
   }));
+
+  const liveFundedEarly = facs.filter(f => f.nature === 'Funded' && f.status === 'Live');
+  const histFundedEarly = facs.filter(f => f.nature === 'Funded' && f.status !== 'Live');
+
+  if (liveFundedEarly.length === 0 && histFundedEarly.length === 0) {
+    return {
+      total: 65, override: null, bd: {},
+      agg: { tLim: 0, tOut: 0, tOver: 0, funded: 0, live: facs.filter(f => f.status === 'Live').length, hist: facs.filter(f => f.status !== 'Live').length, total: facs.length, util: 0, baseScore: 65 },
+      flags: [],
+      dataTier: 'first-timer', dataTierNote: FIRST_TIMER_NOTE,
+    };
+  }
 
   const live = facs.filter(f => f.status === "Live");
   const hist = facs.filter(f => f.status !== "Live");
@@ -126,5 +141,6 @@ export function calcScore(facs) {
     },
     agg: { tLim, tOut, tOver, funded: funded.length, live: live.length, hist: hist.length, total: facs.length, util: tLim > 0 ? tOut / tLim : 0, baseScore },
     flags,
+    dataTier: 'live', dataTierNote: null,
   };
 }
