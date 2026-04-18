@@ -6,6 +6,7 @@ import { fmt } from './utils/format';
 import { calcScore } from './scoring/calcScore';
 import { parseBBCIB } from './parser/parseBBCIB';
 import { assessParseQuality } from './parser/parseQuality';
+import { computeStamp } from './stamp/computeStamp.js';
 import { pdfToText } from './parser/pdfToText';
 import { doExport } from './export/excelExport';
 import Gauge from './components/shared/Gauge';
@@ -13,43 +14,20 @@ import FacTable from './components/shared/FacTable';
 import FacSummaryBar from './components/shared/FacSummaryBar';
 import RepaymentChart from './components/shared/RepaymentChart';
 import ScoreExplainer from './components/shared/ScoreExplainer';
+import ScoreBlock from './components/report/ScoreBlock.jsx';
+import BreakdownBars from './components/report/BreakdownBars.jsx';
+import FacilityTable from './components/report/FacilityTable.jsx';
+import AuditStamp from './components/AuditStamp.jsx';
+import PrintReport from './components/PrintReport.jsx';
+import ParseQualityBanner from './components/report/ParseQualityBanner.jsx';
 
 const getBorrowerFacs = (r) => r.facilities.filter(f => f.role === "Borrower" || f.role === "CoBorrower");
 
-function ParseQualityBanner({ pq }) {
-  if (!pq || pq.tier === 'ok') return null;
-  const fmtN = (n) => new Intl.NumberFormat('en-IN').format(n);
-  const describe = (issue) =>
-    `${issue.field === 'outstanding' ? 'Outstanding' : 'Overdue'}: summary says BDT ${fmtN(issue.summaryValue)}, facilities total BDT ${fmtN(issue.computedValue)} (gap BDT ${fmtN(issue.gap)}).`;
-
-  if (pq.tier === 'unavailable') {
-    return (
-      <div style={{ margin: '12px 0', padding: '12px 14px', background: '#fef3c7', border: '1px solid #fbbf24', borderRadius: 8, color: '#78350f', fontSize: 13 }}>
-        Could not locate summary section in this PDF. Cross-check with the facility table skipped.
-      </div>
-    );
-  }
-
-  if (pq.tier === 'minor') {
-    return (
-      <div style={{ margin: '12px 0', padding: '12px 14px', background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: 8, color: '#78350f', fontSize: 13 }}>
-        <div style={{ fontWeight: 700, marginBottom: 4 }}>Minor parse mismatch — score shown but verify</div>
-        {pq.issues.map((i, idx) => <div key={idx}>{describe(i)}</div>)}
-      </div>
-    );
-  }
-
-  // major
-  return (
-    <div style={{ margin: '12px 0', padding: '16px 18px', background: '#fee2e2', border: '2px solid #dc2626', borderRadius: 8, color: '#7f1d1d' }}>
-      <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 6 }}>Cannot score — parse incomplete</div>
-      {pq.issues.map((i, idx) => <div key={idx} style={{ fontSize: 13, marginBottom: 2 }}>{describe(i)}</div>)}
-      <div style={{ fontSize: 12, marginTop: 8, color: '#991b1b' }}>Please re-upload the PDF or verify manually with the original CIB.</div>
-    </div>
-  );
-}
-
 export default function App() {
+  if (typeof window !== 'undefined' && window.location.hash === '#print') {
+    return <PrintReport />;
+  }
+
   const [reports, setReports] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [view, setView] = useState("upload");
@@ -103,6 +81,12 @@ export default function App() {
     if (isMobile) setSideOpen(false);
   };
 
+  const handlePrint = (report, score, band) => {
+    const payload = JSON.stringify({ report, score, band });
+    sessionStorage.setItem('cibxray.printPayload', payload);
+    window.open('/#print', '_blank', 'noopener,noreferrer');
+  };
+
   const TABS = [
     { key: "summary", label: "Summary & Rating" },
     { key: "borrower", label: "Borrower" },
@@ -143,7 +127,8 @@ export default function App() {
       const file = pdfs[pi];
       setCurrentFileName(file.name);
       try {
-        const text = await pdfToText(file);
+        const buf = await file.arrayBuffer();
+        const text = await pdfToText(buf);
         const parsed = parseBBCIB(text, file.name);
         counter.current++;
         parsed.reportNo = "CIB-" + String(counter.current).padStart(3, "0");
@@ -155,6 +140,7 @@ export default function App() {
         }
 
         parsed.parseQuality = assessParseQuality(parsed);
+        parsed.stamp = await computeStamp(buf);
 
         newReports.push(parsed);
         setFileLog(prev => prev.map((entry, idx) =>
@@ -485,31 +471,32 @@ export default function App() {
 
                     {/* Score card — only show if there are borrower facilities */}
                     {active.parseQuality?.tier !== 'major' && borrowerFacs.length > 0 && (
-                    <div style={{ ...S.card, display: "flex", alignItems: "center", gap: 18, background: b.bg, border: "1px solid " + b.color + "22" }}>
-                      <Gauge score={scActive.total} override={scActive.override} />
-                      <div style={{ flex: 1 }}>
-                        {scActive.override === "UNACCEPTABLE" && <span style={{ fontSize: 10, background: "#991b1b", color: "#fff", padding: "2px 8px", borderRadius: 4, fontWeight: 700, display: "inline-block", marginBottom: 4 }}>AUTO-DECLINE</span>}
-                        <p style={{ fontSize: 12.5, color: "#334155", lineHeight: 1.5 }}>{b.desc}</p>
-                        {scActive.override && <p style={{ fontSize: 11, color: b.color, fontWeight: 600, marginTop: 4 }}>Override: {scActive.override}</p>}
-                      </div>
-                    </div>
+                      <ScoreBlock score={scActive} band={b} dataTierNote={scActive?.dataTierNote} variant="screen" />
                     )}
 
-                    {active.parseQuality?.tier !== 'major' && borrowerFacs.length > 0 && scActive?.dataTierNote && (
-                      <div style={{ margin: '8px 0', padding: '10px 12px', background: '#eff6ff', border: '1px solid #93c5fd', borderRadius: 8, color: '#1e40af', fontSize: 12 }}>
-                        {scActive.dataTierNote}
+                    {active?.stamp && (
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+                        <button
+                          type="button"
+                          onClick={() => handlePrint(active, scActive, b)}
+                          disabled={active?.parseQuality?.tier === 'major'}
+                          title={active?.parseQuality?.tier === 'major'
+                            ? 'Score hidden due to parse mismatch. Print not available.'
+                            : 'Open printable 1-page summary'}
+                          style={{
+                            padding: '6px 14px',
+                            borderRadius: 6,
+                            border: '1px solid #0f172a',
+                            background: active?.parseQuality?.tier === 'major' ? '#e2e8f0' : '#0f172a',
+                            color: active?.parseQuality?.tier === 'major' ? '#64748b' : 'white',
+                            cursor: active?.parseQuality?.tier === 'major' ? 'not-allowed' : 'pointer',
+                            fontSize: 12,
+                            fontWeight: 500,
+                          }}
+                        >
+                          Print report
+                        </button>
                       </div>
-                    )}
-
-                    {active.parseQuality?.tier !== 'major' && borrowerFacs.length > 0 && (
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 8, marginBottom: 12 }}>
-                      {[["Live Facs", scActive.agg.live], ["Total Limit", "\u09F3" + fmt(scActive.agg.tLim)], ["Outstanding", "\u09F3" + fmt(scActive.agg.tOut)], ["Overdue", "\u09F3" + fmt(scActive.agg.tOver)], ["Utilization", (scActive.agg.util * 100).toFixed(0) + "%"]].map(([l, v], idx) => (
-                        <div key={l} style={{ background: "#fff", borderRadius: 8, padding: "10px 12px", border: "1px solid #e2e8f0" }}>
-                          <div style={{ fontSize: 10, color: "#94a3b8", marginBottom: 2 }}>{l}</div>
-                          <div style={{ fontSize: 14, fontWeight: 700, color: (idx === 3 && scActive.agg.tOver > 0) || (idx === 4 && scActive.agg.util > 0.8) ? "#dc2626" : "#0f172a" }}>{v}</div>
-                        </div>
-                      ))}
-                    </div>
                     )}
 
                     {/* Subject profile */}
@@ -551,111 +538,16 @@ export default function App() {
 
                     {/* Score breakdown + flags — only with borrower facilities */}
                     {borrowerFacs.length > 0 && (
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                      <div style={S.card}>
-                        <div style={S.sec}>Score Breakdown (3-Factor + Penalty)</div>
-                        {Object.entries(scActive.bd).map(([k, v]) => {
-                          const isPen = v.isPenalty;
-                          const c = isPen ? (v.pts === 0 ? "#059669" : "#dc2626") : v.s >= 70 ? "#059669" : v.s >= 40 ? "#d97706" : "#dc2626";
-                          return (
-                            <div key={k} style={{ marginBottom: 11 }}>
-                              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11.5, marginBottom: 2 }}>
-                                <span style={{ fontWeight: 500 }}>{k}</span>
-                                <span style={{ fontWeight: 600, color: c }}>{isPen ? v.pts + "pts" : v.s + "/100 = " + v.pts + "pts"} <span style={{ color: "#94a3b8", fontWeight: 400 }}>({v.w}%)</span></span>
-                              </div>
-                              <div style={{ background: "#f1f5f9", borderRadius: 3, height: 6, overflow: "hidden" }}>
-                                <div style={{ width: (isPen ? Math.min(Math.abs(v.pts), 50) / 50 * 100 : v.s) + "%", height: "100%", background: c, borderRadius: 3 }} />
-                              </div>
-                            </div>
-                          );
-                        })}
-                        <div style={{ borderTop: "2px solid #e2e8f0", paddingTop: 8, display: "flex", justifyContent: "space-between", fontSize: 13, fontWeight: 700 }}>
-                          <span>FINAL</span><span style={{ color: b.color }}>{scActive.total}/100</span>
-                        </div>
-                      </div>
-                      <div style={S.card}>
-                        <div style={S.sec}>Flags</div>
-                        {scActive.flags.map((f, i) => (
-                          <div key={i} style={{ background: f.critical ? "#fecaca" : f.ok ? "#ecfdf5" : "#fffbeb", borderRadius: 6, padding: "8px 12px", marginBottom: 6, border: "1px solid " + (f.critical ? "#991b1b" : f.ok ? "#059669" : "#d97706") + "20" }}>
-                            <div style={{ fontWeight: 600, fontSize: 11.5, color: f.critical ? "#991b1b" : f.ok ? "#059669" : "#d97706", marginBottom: 1 }}>{f.critical ? "\u26D4 " : f.ok ? "\u2713 " : "\u26A0 "}{f.t}</div>
-                            <div style={{ fontSize: 11, color: "#334155" }}>{f.d}</div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                      <BreakdownBars score={scActive} band={b} variant="screen" />
                     )}
+
+                    {active?.stamp && <AuditStamp stamp={active.stamp} />}
                   </div>
                 )}
 
                 {/* BORROWER TAB */}
                 {tab === "borrower" && (
-                  <div>
-                    <FacSummaryBar facs={borrowerFacs} />
-                    <RepaymentChart facs={borrowerFacs.filter(f => f.nature === "Funded")} title="Funded Facilities — Repayment Timeline" />
-                    <RepaymentChart facs={borrowerFacs.filter(f => f.nature === "Non-Funded")} title="Non-Funded Facilities — Exposure Timeline" />
-                    {(() => {
-                      const liveBorrower = borrowerFacs.filter(f => f.status === "Live");
-                      const termBorrower = borrowerFacs.filter(f => f.status !== "Live");
-                      const liveFunded = liveBorrower.filter(f => f.nature === "Funded");
-                      const liveNonFunded = liveBorrower.filter(f => f.nature === "Non-Funded");
-                      const termFunded = termBorrower.filter(f => f.nature === "Funded");
-                      const termNonFunded = termBorrower.filter(f => f.nature === "Non-Funded");
-                      return (
-                        <>
-                          <div style={S.card}>
-                            <div style={{ ...S.sec, color: "#059669" }}>Live Facilities ({liveBorrower.length})</div>
-                            {liveBorrower.length > 0 ? (
-                              <>
-                                {liveFunded.length > 0 && (
-                                  <div style={{ marginBottom: liveNonFunded.length > 0 ? 16 : 0 }}>
-                                    <div style={{ fontSize: 11, fontWeight: 700, color: "#1d4ed8", marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
-                                      <span style={{ background: "#dbeafe", padding: "1px 8px", borderRadius: 4, fontSize: 10 }}>Funded</span>
-                                      <span style={{ color: "#94a3b8", fontWeight: 400 }}>({liveFunded.length})</span>
-                                    </div>
-                                    <FacTable facs={liveFunded} showTotals />
-                                  </div>
-                                )}
-                                {liveNonFunded.length > 0 && (
-                                  <div>
-                                    <div style={{ fontSize: 11, fontWeight: 700, color: "#15803d", marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
-                                      <span style={{ background: "#f0fdf4", padding: "1px 8px", borderRadius: 4, fontSize: 10 }}>Non-Funded</span>
-                                      <span style={{ color: "#94a3b8", fontWeight: 400 }}>({liveNonFunded.length})</span>
-                                    </div>
-                                    <FacTable facs={liveNonFunded} showTotals />
-                                  </div>
-                                )}
-                              </>
-                            ) : <p style={{ color: "#94a3b8", fontSize: 12 }}>No live borrower facilities.</p>}
-                          </div>
-                          <div style={S.card}>
-                            <div style={{ ...S.sec, color: "#64748b" }}>Terminated / Settled Facilities ({termBorrower.length})</div>
-                            {termBorrower.length > 0 ? (
-                              <>
-                                {termFunded.length > 0 && (
-                                  <div style={{ marginBottom: termNonFunded.length > 0 ? 16 : 0 }}>
-                                    <div style={{ fontSize: 11, fontWeight: 700, color: "#1d4ed8", marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
-                                      <span style={{ background: "#dbeafe", padding: "1px 8px", borderRadius: 4, fontSize: 10 }}>Funded</span>
-                                      <span style={{ color: "#94a3b8", fontWeight: 400 }}>({termFunded.length})</span>
-                                    </div>
-                                    <FacTable facs={termFunded} showTotals />
-                                  </div>
-                                )}
-                                {termNonFunded.length > 0 && (
-                                  <div>
-                                    <div style={{ fontSize: 11, fontWeight: 700, color: "#15803d", marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
-                                      <span style={{ background: "#f0fdf4", padding: "1px 8px", borderRadius: 4, fontSize: 10 }}>Non-Funded</span>
-                                      <span style={{ color: "#94a3b8", fontWeight: 400 }}>({termNonFunded.length})</span>
-                                    </div>
-                                    <FacTable facs={termNonFunded} showTotals />
-                                  </div>
-                                )}
-                              </>
-                            ) : <p style={{ color: "#94a3b8", fontSize: 12 }}>No terminated borrower facilities.</p>}
-                          </div>
-                        </>
-                      );
-                    })()}
-                  </div>
+                  <FacilityTable facilities={borrowerFacs} variant="screen" />
                 )}
 
                 {/* GUARANTOR TAB */}

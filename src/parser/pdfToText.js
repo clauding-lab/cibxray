@@ -1,10 +1,9 @@
 import { loadPdf } from './pdfLoader';
 import { isScannedPdf } from './scanDetect';
 
-export async function pdfToText(file) {
+export async function pdfToText(arrayBuffer) {
   if (!await loadPdf()) throw new Error("PDF.js failed to load");
-  const buf = await file.arrayBuffer();
-  const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
+  const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
   if (await isScannedPdf(pdf)) {
     throw new Error('SCANNED_PDF');
