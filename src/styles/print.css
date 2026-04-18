@@ -1,0 +1,28 @@
+@page {
+  size: A4 portrait;
+  margin: 12mm;
+}
+
+@media print {
+  body {
+    background: white !important;
+    margin: 0;
+  }
+  body > #root > *:not(.print-root) {
+    display: none !important;
+  }
+  .print-root {
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}
+
+.print-root {
+  box-sizing: border-box;
+}
