@@ -13,6 +13,7 @@ import FacTable from './components/shared/FacTable';
 import FacSummaryBar from './components/shared/FacSummaryBar';
 import RepaymentChart from './components/shared/RepaymentChart';
 import ScoreExplainer from './components/shared/ScoreExplainer';
+import ScoreBlock from './components/report/ScoreBlock.jsx';
 
 const getBorrowerFacs = (r) => r.facilities.filter(f => f.role === "Borrower" || f.role === "CoBorrower");
 
@@ -485,31 +486,7 @@ export default function App() {
 
                     {/* Score card — only show if there are borrower facilities */}
                     {active.parseQuality?.tier !== 'major' && borrowerFacs.length > 0 && (
-                    <div style={{ ...S.card, display: "flex", alignItems: "center", gap: 18, background: b.bg, border: "1px solid " + b.color + "22" }}>
-                      <Gauge score={scActive.total} override={scActive.override} />
-                      <div style={{ flex: 1 }}>
-                        {scActive.override === "UNACCEPTABLE" && <span style={{ fontSize: 10, background: "#991b1b", color: "#fff", padding: "2px 8px", borderRadius: 4, fontWeight: 700, display: "inline-block", marginBottom: 4 }}>AUTO-DECLINE</span>}
-                        <p style={{ fontSize: 12.5, color: "#334155", lineHeight: 1.5 }}>{b.desc}</p>
-                        {scActive.override && <p style={{ fontSize: 11, color: b.color, fontWeight: 600, marginTop: 4 }}>Override: {scActive.override}</p>}
-                      </div>
-                    </div>
-                    )}
-
-                    {active.parseQuality?.tier !== 'major' && borrowerFacs.length > 0 && scActive?.dataTierNote && (
-                      <div style={{ margin: '8px 0', padding: '10px 12px', background: '#eff6ff', border: '1px solid #93c5fd', borderRadius: 8, color: '#1e40af', fontSize: 12 }}>
-                        {scActive.dataTierNote}
-                      </div>
-                    )}
-
-                    {active.parseQuality?.tier !== 'major' && borrowerFacs.length > 0 && (
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 8, marginBottom: 12 }}>
-                      {[["Live Facs", scActive.agg.live], ["Total Limit", "\u09F3" + fmt(scActive.agg.tLim)], ["Outstanding", "\u09F3" + fmt(scActive.agg.tOut)], ["Overdue", "\u09F3" + fmt(scActive.agg.tOver)], ["Utilization", (scActive.agg.util * 100).toFixed(0) + "%"]].map(([l, v], idx) => (
-                        <div key={l} style={{ background: "#fff", borderRadius: 8, padding: "10px 12px", border: "1px solid #e2e8f0" }}>
-                          <div style={{ fontSize: 10, color: "#94a3b8", marginBottom: 2 }}>{l}</div>
-                          <div style={{ fontSize: 14, fontWeight: 700, color: (idx === 3 && scActive.agg.tOver > 0) || (idx === 4 && scActive.agg.util > 0.8) ? "#dc2626" : "#0f172a" }}>{v}</div>
-                        </div>
-                      ))}
-                    </div>
+                      <ScoreBlock score={scActive} band={b} dataTierNote={scActive?.dataTierNote} variant="screen" />
                     )}
 
                     {/* Subject profile */}
