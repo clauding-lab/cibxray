@@ -20,6 +20,7 @@ import FacilityTable from './components/report/FacilityTable.jsx';
 import AuditStamp from './components/AuditStamp.jsx';
 import PrintReport from './components/PrintReport.jsx';
 import ParseQualityBanner from './components/report/ParseQualityBanner.jsx';
+import { stripRawText, clearPrintPayload, PRINT_PAYLOAD_KEY } from '../lib/reportHygiene.js';
 
 const getBorrowerFacs = (r) => r.facilities.filter(f => f.role === "Borrower" || f.role === "CoBorrower");
 
@@ -51,6 +52,14 @@ export default function App() {
     };
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  // Scrub the print payload on App unmount so credit data does not linger
+  // in localStorage if the banker closes the tab mid-session.
+  useEffect(() => {
+    return () => {
+      clearPrintPayload(localStorage);
+    };
   }, []);
 
   const sideW = isMobile ? 200 : 250;
@@ -86,9 +95,22 @@ export default function App() {
     // new-tab boundary — sessionStorage is NOT inherited when the new
     // window is opened via window.open(). writtenAt lets PrintReport
     // ignore stale payloads from an abandoned earlier click.
-    const payload = JSON.stringify({ writtenAt: Date.now(), report, score, band });
-    localStorage.setItem('cibxray.printPayload', payload);
-    window.open('/#print', '_blank');
+    //
+    // rawText is stripped before serialization so several KB of raw
+    // PDF text per facility never hit localStorage. try/finally + the
+    // popup-blocker guard ensure we scrub the key on any failure path.
+    try {
+      const sanitized = stripRawText(report);
+      const payload = JSON.stringify({ writtenAt: Date.now(), report: sanitized, score, band });
+      localStorage.setItem(PRINT_PAYLOAD_KEY, payload);
+      const win = window.open('/#print', '_blank');
+      if (!win) {
+        clearPrintPayload(localStorage);
+      }
+    } catch (err) {
+      clearPrintPayload(localStorage);
+      throw err;
+    }
   };
 
   const TABS = [
@@ -113,6 +135,9 @@ export default function App() {
     }));
 
     if (!pdfs.length && !nonPdfs.length) return;
+    // Scrub any leftover print payload from a prior batch before a new
+    // upload starts replacing/adding reports in memory.
+    clearPrintPayload(localStorage);
     setProcessing(true);
     setProgressTotal(pdfs.length);
     setProgressCurrent(0);
@@ -202,7 +227,7 @@ export default function App() {
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           {reports.length > 1 && <button onClick={() => doExport(reports, "batch")} style={{ ...S.bo, background: "rgba(14,165,233,0.15)", color: "#7dd3fc", border: "1px solid rgba(56,189,248,0.3)", fontSize: 11 }}>Batch Export ({reports.length})</button>}
           <button onClick={() => { setView("explainer"); setActiveId(null); }} title="Risk Grading Methodology" style={{ background: "rgba(14,165,233,0.15)", border: "1px solid rgba(56,189,248,0.3)", color: "#7dd3fc", width: 28, height: 28, borderRadius: "50%", cursor: "pointer", fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>?</button>
-          <button onClick={() => { setReports([]); setFileLog([]); setView("upload"); setActiveId(null); setTab("summary"); counter.current = 0; }} title="Reset — Clear all reports" style={{ background: "rgba(14,165,233,0.15)", border: "1px solid rgba(56,189,248,0.3)", color: "#7dd3fc", width: 28, height: 28, borderRadius: "50%", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>{"\u21BB"}</button>
+          <button onClick={() => { clearPrintPayload(localStorage); setReports([]); setFileLog([]); setView("upload"); setActiveId(null); setTab("summary"); counter.current = 0; }} title="Reset — Clear all reports" style={{ background: "rgba(14,165,233,0.15)", border: "1px solid rgba(56,189,248,0.3)", color: "#7dd3fc", width: 28, height: 28, borderRadius: "50%", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>{"\u21BB"}</button>
           <span style={{ fontSize: 11, color: "#7dd3fc" }}>{reports.length} report{reports.length !== 1 ? "s" : ""}</span>
           <a href="/api/logout" title="Sign out" style={{ background: "rgba(14,165,233,0.15)", border: "1px solid rgba(56,189,248,0.3)", color: "#7dd3fc", width: 28, height: 28, borderRadius: "50%", textDecoration: "none", fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>{"\u23FB"}</a>
         </div>
