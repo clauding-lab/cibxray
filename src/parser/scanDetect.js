@@ -1,3 +1,5 @@
+import { pdfjsLib } from './loadPdfjs.js';
+
 export async function isScannedPdf(pdfDoc, ops = globalOps()) {
   const { showText, showSpacedText } = ops;
   for (let i = 1; i <= pdfDoc.numPages; i++) {
@@ -11,7 +13,6 @@ export async function isScannedPdf(pdfDoc, ops = globalOps()) {
 }
 
 function globalOps() {
-  const OPS = typeof window !== 'undefined' && window.pdfjsLib ? window.pdfjsLib.OPS : null;
-  if (!OPS) throw new Error('pdfjsLib not loaded');
+  const OPS = pdfjsLib.OPS;
   return { showText: OPS.showText, showSpacedText: OPS.showSpacedText };
 }

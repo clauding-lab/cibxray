@@ -11,7 +11,7 @@
     "test": "node --test --experimental-test-coverage lib"
   },
   "dependencies": {
-    "pdfjs-dist": "^5.5.207",
+    "pdfjs-dist": "3.11.174",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "xlsx": "^0.18.5"
