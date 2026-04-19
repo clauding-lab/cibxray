@@ -1,13 +1,29 @@
 import { buildSession, verifyPassword, renderLoginHtml } from '../lib/session.js';
+import { isRateLimited, recordFailure, clientIp } from '../lib/rateLimit.js';
 
 export const config = { runtime: 'nodejs' };
 
 const COOKIE_MAX_AGE_SECONDS = 48 * 3600;
+const RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+const FAILED_ATTEMPT_DELAY_MS = 1000;
+
+const failureStore = new Map();
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).send('Method Not Allowed');
     return;
+  }
+
+  const ip = clientIp(req);
+  const now = Date.now();
+  const gate = isRateLimited(failureStore, ip, now, RATE_LIMIT_MAX);
+  if (gate.limited) {
+    const retryAfterSec = Math.ceil(gate.retryAfterMs / 1000);
+    res.setHeader('Retry-After', String(retryAfterSec));
+    const minutes = Math.ceil(retryAfterSec / 60);
+    return sendHtml(res, 429, renderLoginHtml(`Too many attempts. Try again in ${minutes} minute${minutes === 1 ? '' : 's'}.`));
   }
 
   const contentType = req.headers['content-type'] || '';
@@ -34,6 +50,8 @@ export default async function handler(req, res) {
   }
 
   if (!verifyPassword(password, expectedPassword)) {
+    recordFailure(failureStore, ip, now, RATE_LIMIT_WINDOW_MS);
+    await sleep(FAILED_ATTEMPT_DELAY_MS);
     return sendHtml(res, 401, renderLoginHtml('Incorrect access code.'));
   }
 
@@ -42,6 +60,10 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Location', '/');
   res.status(302).end();
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function sendHtml(res, status, html) {
