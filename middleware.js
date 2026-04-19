@@ -2,7 +2,7 @@ import { verifySession, renderLoginHtml } from './lib/session.js';
 import { readCookie } from './lib/readCookie.js';
 
 export const config = {
-  matcher: '/((?!api/).*)',
+  matcher: '/((?!api/|robots\\.txt).*)',
   runtime: 'nodejs',
 };
 
