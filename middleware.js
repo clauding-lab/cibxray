@@ -1,4 +1,5 @@
 import { verifySession, renderLoginHtml } from './lib/session.js';
+import { readCookie } from './lib/readCookie.js';
 
 export const config = {
   matcher: '/((?!api/).*)',
@@ -23,9 +24,4 @@ export default async function middleware(request) {
       'Cache-Control': 'no-store',
     },
   });
-}
-
-function readCookie(header, name) {
-  const match = header.match(new RegExp(`(?:^|;\\s*)${name}=([^;]+)`));
-  return match ? decodeURIComponent(match[1]) : null;
 }
