@@ -20,6 +20,7 @@ import FacilityTable from './components/report/FacilityTable.jsx';
 import AuditStamp from './components/AuditStamp.jsx';
 import BehavioralSignals from './components/report/BehavioralSignals.jsx';
 import ExposureTrends from './components/report/ExposureTrends.jsx';
+import CreditCardDetails from './components/report/CreditCardDetails.jsx';
 import PrintReport from './components/PrintReport.jsx';
 import ParseQualityBanner from './components/report/ParseQualityBanner.jsx';
 import { stripRawText, clearPrintPayload, PRINT_PAYLOAD_KEY } from '../lib/reportHygiene.js';
@@ -121,6 +122,7 @@ export default function App() {
     { key: "guarantor", label: "Guarantor" },
     { key: "signals", label: "Behavioral Signals" },
     { key: "trends", label: "Exposure Trends" },
+    { key: "cards", label: "Credit Cards" },
     { key: "redflags", label: "Red Flags" },
     { key: "linked", label: "Linked Entities" },
     { key: "export", label: "Export" },
@@ -635,6 +637,11 @@ export default function App() {
                 {/* EXPOSURE TRENDS TAB */}
                 {tab === "trends" && (
                   <ExposureTrends report={active} />
+                )}
+
+                {/* CREDIT CARDS TAB */}
+                {tab === "cards" && (
+                  <CreditCardDetails report={active} />
                 )}
 
                 {/* RED FLAGS TAB */}
