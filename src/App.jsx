@@ -18,6 +18,7 @@ import ScoreBlock from './components/report/ScoreBlock.jsx';
 import BreakdownBars from './components/report/BreakdownBars.jsx';
 import FacilityTable from './components/report/FacilityTable.jsx';
 import AuditStamp from './components/AuditStamp.jsx';
+import BehavioralSignals from './components/report/BehavioralSignals.jsx';
 import PrintReport from './components/PrintReport.jsx';
 import ParseQualityBanner from './components/report/ParseQualityBanner.jsx';
 import { stripRawText, clearPrintPayload, PRINT_PAYLOAD_KEY } from '../lib/reportHygiene.js';
@@ -567,6 +568,8 @@ export default function App() {
                     )}
 
                     {active?.stamp && <AuditStamp stamp={active.stamp} />}
+
+                    <BehavioralSignals report={active} />
                   </div>
                 )}
 
