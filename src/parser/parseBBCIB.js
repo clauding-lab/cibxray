@@ -194,6 +194,12 @@ export function parseBBCIB(text, fileName) {
     const creditLimMatch = block.match(/Credit limit:\s*([\d,]+)/);
     const sanctionLimit = parseNum(slMatch ? slMatch[1] : (creditLimMatch ? creditLimMatch[1] : "0"));
 
+    const instAmtMatch = block.match(/Installment Amount:?\s*\n?\s*([\d,]+)/i);
+    const installmentAmount = instAmtMatch ? parseNum(instAmtMatch[1]) : 0;
+
+    const remInstAmtMatch = block.match(/Remaining installments\s*\n?\s*Amount:?\s*\n?\s*([\d,]+)/i);
+    const remainingInstallmentsAmount = remInstAmtMatch ? parseNum(remInstAmtMatch[1]) : 0;
+
     const startMatch = block.match(/Starting date:\s*(\d{2}\/\d{2}\/\d{4})/);
     const endMatch = block.match(/End date of contract:\s*(\d{2}\/\d{2}\/\d{4})/);
 
@@ -208,6 +214,9 @@ export function parseBBCIB(text, fileName) {
     const reschMatch = block.match(/Number of time\(s\)\s*\n?\s*rescheduled:?\s*\n?\s*(\d+)(?![\d\/])/);
     const rescheduledCount = reschMatch ? parseInt(reschMatch[1]) : 0;
     const rescheduled = rescheduledCount > 0;
+
+    const reschDateMatch = block.match(/Date of last rescheduling:?\s*\n?\s*(\d{2}\/\d{2}\/\d{4})/i);
+    const dateOfLastRescheduling = reschDateMatch ? reschDateMatch[1] : "";
 
     const reorgMatch = block.match(/Reorganized credit:\s*(YES|NO)/i);
     const reorganized = reorgMatch ? reorgMatch[1].toUpperCase() === "YES" : false;
@@ -248,16 +257,16 @@ export function parseBBCIB(text, fileName) {
         const dateParts = match[1].split("/");
         const dateISO = dateParts[2] + "-" + dateParts[1] + "-" + dateParts[0];
 
-        let rowOut = 0, rowOver = 0, rowLim = sanctionLimit;
+        let rowOut = 0, rowOver = 0, rowLim = sanctionLimit, rowNpi = 0;
         if (isCreditCard) {
           rowLim = nums[0]; rowOut = nums[1]; rowOver = nums[2];
         } else if (isNonInstallment) {
           rowLim = nums[0]; rowOut = nums[1]; rowOver = nums[2];
         } else {
-          rowOut = nums[0]; rowOver = nums[1];
+          rowOut = nums[0]; rowOver = nums[1]; rowNpi = nums[2];
         }
 
-        history.push({ date: dateISO, dateStr: match[1], outstanding: rowOut, overdue: rowOver, limit: rowLim, status });
+        history.push({ date: dateISO, dateStr: match[1], outstanding: rowOut, overdue: rowOver, limit: rowLim, npi: rowNpi, status });
 
         if (isFirst) {
           latestOutstanding = rowOut;
@@ -281,10 +290,13 @@ export function parseBBCIB(text, fileName) {
       outstanding: latestOutstanding,
       overdue: latestOverdue,
       classification: latestStatus,
+      installmentAmount,
+      remainingInstallmentsAmount,
       startDate: startMatch ? startMatch[1] : "",
       endDate: endMatch ? endMatch[1] : "",
       rescheduled,
       rescheduledCount,
+      dateOfLastRescheduling,
       reorganized,
       defaultStatus,
       willfulDefault,
