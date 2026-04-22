@@ -44,10 +44,7 @@ export default function BehavioralSignals({ report, asOf = new Date() }) {
 
   return (
     <div style={S.card}>
-      <div style={S.sec}>Behavioral Signals &amp; Exposure Analytics</div>
-      <div style={{ fontSize: 11, color: '#94a3b8', marginTop: -6, marginBottom: 14 }}>
-        Additional metrics per CRM-CD requirements (DevReq-1 Phase A). "Last 24M / 12M" windows are relative to today.
-      </div>
+      <div style={S.sec}>Exposure Analytics</div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
         <Metric
           label="Live Loans EMI (Monthly)"
