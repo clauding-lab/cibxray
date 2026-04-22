@@ -194,6 +194,9 @@ export function parseBBCIB(text, fileName) {
     const creditLimMatch = block.match(/Credit limit:\s*([\d,]+)/);
     const sanctionLimit = parseNum(slMatch ? slMatch[1] : (creditLimMatch ? creditLimMatch[1] : "0"));
 
+    const instAmtMatch = block.match(/Installment Amount:?\s*\n?\s*([\d,]+)/i);
+    const installmentAmount = instAmtMatch ? parseNum(instAmtMatch[1]) : 0;
+
     const startMatch = block.match(/Starting date:\s*(\d{2}\/\d{2}\/\d{4})/);
     const endMatch = block.match(/End date of contract:\s*(\d{2}\/\d{2}\/\d{4})/);
 
@@ -208,6 +211,9 @@ export function parseBBCIB(text, fileName) {
     const reschMatch = block.match(/Number of time\(s\)\s*\n?\s*rescheduled:?\s*\n?\s*(\d+)(?![\d\/])/);
     const rescheduledCount = reschMatch ? parseInt(reschMatch[1]) : 0;
     const rescheduled = rescheduledCount > 0;
+
+    const reschDateMatch = block.match(/Date of last rescheduling:?\s*\n?\s*(\d{2}\/\d{2}\/\d{4})/i);
+    const dateOfLastRescheduling = reschDateMatch ? reschDateMatch[1] : "";
 
     const reorgMatch = block.match(/Reorganized credit:\s*(YES|NO)/i);
     const reorganized = reorgMatch ? reorgMatch[1].toUpperCase() === "YES" : false;
@@ -281,10 +287,12 @@ export function parseBBCIB(text, fileName) {
       outstanding: latestOutstanding,
       overdue: latestOverdue,
       classification: latestStatus,
+      installmentAmount,
       startDate: startMatch ? startMatch[1] : "",
       endDate: endMatch ? endMatch[1] : "",
       rescheduled,
       rescheduledCount,
+      dateOfLastRescheduling,
       reorganized,
       defaultStatus,
       willfulDefault,
