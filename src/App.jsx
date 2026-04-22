@@ -19,6 +19,7 @@ import BreakdownBars from './components/report/BreakdownBars.jsx';
 import FacilityTable from './components/report/FacilityTable.jsx';
 import AuditStamp from './components/AuditStamp.jsx';
 import BehavioralSignals from './components/report/BehavioralSignals.jsx';
+import ExposureTrends from './components/report/ExposureTrends.jsx';
 import PrintReport from './components/PrintReport.jsx';
 import ParseQualityBanner from './components/report/ParseQualityBanner.jsx';
 import { stripRawText, clearPrintPayload, PRINT_PAYLOAD_KEY } from '../lib/reportHygiene.js';
@@ -119,6 +120,7 @@ export default function App() {
     { key: "borrower", label: "Borrower" },
     { key: "guarantor", label: "Guarantor" },
     { key: "signals", label: "Behavioral Signals" },
+    { key: "trends", label: "Exposure Trends" },
     { key: "redflags", label: "Red Flags" },
     { key: "linked", label: "Linked Entities" },
     { key: "export", label: "Export" },
@@ -628,6 +630,11 @@ export default function App() {
                 {/* BEHAVIORAL SIGNALS TAB */}
                 {tab === "signals" && (
                   <BehavioralSignals report={active} />
+                )}
+
+                {/* EXPOSURE TRENDS TAB */}
+                {tab === "trends" && (
+                  <ExposureTrends report={active} />
                 )}
 
                 {/* RED FLAGS TAB */}
