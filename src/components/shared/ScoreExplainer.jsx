@@ -46,20 +46,17 @@ const OVERRIDES = [
   {
     trigger: "Live adverse classification (SS / DF / BL / BLW)",
     effect: "Score capped at 15. Override → UNACCEPTABLE. Auto-decline.",
-    color: "#991b1b",
-    bg: "#fef2f2",
+    color: "#fca5a5",
   },
   {
     trigger: "Live SMA (Special Mention Account)",
     effect: "Score capped at 59. Override → ELEVATED or HIGH. Enhanced due diligence.",
-    color: "#d97706",
-    bg: "#fffbeb",
+    color: "#fcd34d",
   },
   {
     trigger: "Historical adverse classification (non-STD terminated)",
     effect: "Score capped at 59. Override → ELEVATED or HIGH. Past issues flag ongoing risk.",
-    color: "#d97706",
-    bg: "#fffbeb",
+    color: "#fcd34d",
   },
 ];
 
@@ -87,187 +84,287 @@ const RED_FLAGS_INFO = [
   { flag: "Unverified Name/NID", desc: "Name, NID, or DOB marked 'Not Verified' by Bangladesh Bank", severity: "Warning" },
 ];
 
-const s = {
-  page: { maxWidth: 900, margin: "0 auto", padding: "24px 20px 60px" },
-  h1: { fontSize: 22, fontWeight: 800, color: "#0c4a6e", marginBottom: 4 },
-  sub: { fontSize: 13, color: "#64748b", marginBottom: 28 },
-  section: { marginBottom: 32 },
-  h2: { fontSize: 16, fontWeight: 700, color: "#0f172a", marginBottom: 12, paddingBottom: 6, borderBottom: "2px solid #e2e8f0" },
-  h3: { fontSize: 13, fontWeight: 700, color: "#334155", marginBottom: 6 },
-  p: { fontSize: 12.5, color: "#475569", lineHeight: 1.7, marginBottom: 10 },
-  card: { background: "#fff", borderRadius: 10, border: "1px solid #e2e8f0", padding: 16, marginBottom: 14, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" },
-  th: { fontSize: 10.5, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.5, padding: "6px 10px", textAlign: "left", borderBottom: "2px solid #e2e8f0", background: "#f8fafc" },
-  td: { fontSize: 12, color: "#334155", padding: "6px 10px", borderBottom: "1px solid #f1f5f9" },
-  badge: (color, bg) => ({ display: "inline-block", fontSize: 10.5, fontWeight: 700, padding: "2px 8px", borderRadius: 4, color, background: bg }),
-  formula: { background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: 8, padding: "12px 16px", fontFamily: "monospace", fontSize: 12.5, color: "#0c4a6e", marginBottom: 14, lineHeight: 1.8 },
-  back: { background: "none", border: "none", color: "#0ea5e9", cursor: "pointer", fontSize: 12, fontWeight: 600, padding: 0, marginBottom: 16, display: "flex", alignItems: "center", gap: 4 },
+const S = {
+  headline: {
+    fontStyle: "italic",
+    fontSize: 14,
+    color: "#7dd3fc",
+    borderLeft: "3px solid #0ea5e9",
+    padding: "10px 14px",
+    background: "rgba(14,165,233,0.08)",
+    borderRadius: "0 6px 6px 0",
+    marginBottom: 22,
+  },
+  h3: {
+    fontSize: 13,
+    fontWeight: 700,
+    color: "#e0f2fe",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    margin: "22px 0 10px 0",
+  },
+  p: { fontSize: 12.5, color: "#cbd5e1", lineHeight: 1.6, marginBottom: 10 },
+  formula: {
+    background: "rgba(2,6,23,0.4)",
+    border: "1px solid rgba(56,189,248,0.25)",
+    borderRadius: 8,
+    padding: "14px 16px",
+    fontFamily: "'SF Mono', Menlo, Consolas, monospace",
+    fontSize: 12.5,
+    color: "#e0f2fe",
+    lineHeight: 1.9,
+  },
+  factorCard: {
+    background: "rgba(2,6,23,0.4)",
+    border: "1px solid rgba(56,189,248,0.2)",
+    borderRadius: 8,
+    padding: "14px 16px",
+    marginBottom: 12,
+  },
+  factorHead: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  factorName: {
+    fontSize: 13.5,
+    fontWeight: 700,
+    color: "#e0f2fe",
+  },
+  weightBadge: {
+    display: "inline-block",
+    fontSize: 10.5,
+    fontWeight: 700,
+    padding: "3px 9px",
+    borderRadius: 4,
+    color: "#7dd3fc",
+    background: "rgba(14,165,233,0.15)",
+    border: "1px solid rgba(56,189,248,0.3)",
+    letterSpacing: 0.5,
+  },
+  factorDesc: { fontSize: 12, color: "#94a3b8", marginBottom: 10, lineHeight: 1.55 },
+  table: { width: "100%", borderCollapse: "collapse", fontSize: 12.5 },
+  th: {
+    textAlign: "left",
+    padding: "8px 10px",
+    color: "#7dd3fc",
+    fontWeight: 600,
+    borderBottom: "1px solid rgba(56,189,248,0.25)",
+    background: "rgba(14,165,233,0.06)",
+    fontSize: 11,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  td: {
+    padding: "8px 10px",
+    borderBottom: "1px solid rgba(56,189,248,0.1)",
+    verticalAlign: "top",
+    color: "#cbd5e1",
+  },
+  tdMono: {
+    padding: "8px 10px",
+    borderBottom: "1px solid rgba(56,189,248,0.1)",
+    color: "#e0f2fe",
+    fontFamily: "'SF Mono', Menlo, Consolas, monospace",
+    fontWeight: 600,
+    whiteSpace: "nowrap",
+  },
+  bandBadge: (color, bg) => ({
+    display: "inline-block",
+    fontSize: 10.5,
+    fontWeight: 700,
+    padding: "3px 9px",
+    borderRadius: 4,
+    color,
+    background: bg,
+    border: `1px solid ${color}33`,
+  }),
+  sevBadge: (color) => ({
+    display: "inline-block",
+    fontSize: 10.5,
+    fontWeight: 700,
+    padding: "3px 9px",
+    borderRadius: 4,
+    color,
+    background: `${color}1a`,
+    border: `1px solid ${color}44`,
+  }),
+  overrideCard: (color) => ({
+    background: `${color}0f`,
+    borderLeft: `3px solid ${color}`,
+    border: `1px solid ${color}33`,
+    borderLeftWidth: 3,
+    borderRadius: 6,
+    padding: "10px 14px",
+    marginBottom: 10,
+  }),
+  overrideTrigger: (color) => ({
+    fontSize: 12.5,
+    fontWeight: 700,
+    color,
+    marginBottom: 3,
+  }),
+  overrideEffect: { fontSize: 12, color: "#cbd5e1", lineHeight: 1.5 },
+  infoCard: {
+    background: "rgba(2,6,23,0.4)",
+    border: "1px solid rgba(56,189,248,0.2)",
+    borderRadius: 8,
+    padding: "14px 16px",
+  },
+  ul: {
+    fontSize: 12.5,
+    color: "#cbd5e1",
+    lineHeight: 1.8,
+    paddingLeft: 20,
+    margin: "8px 0 0 0",
+  },
+  footer: {
+    textAlign: "center",
+    fontSize: 11,
+    color: "#64748b",
+    marginTop: 28,
+    paddingTop: 14,
+    borderTop: "1px solid rgba(56,189,248,0.15)",
+  },
 };
 
-export default function ScoreExplainer({ onBack }) {
+export default function ScoreExplainer() {
   return (
-    <div style={s.page}>
-      {onBack && <button onClick={onBack} style={s.back}>← Back to Reports</button>}
-      <h1 style={s.h1}>Risk Grading & Score Methodology</h1>
-      <p style={s.sub}>How CIBxRay calculates credit risk scores from Bangladesh Bank CIB reports</p>
-
-      {/* Score Formula */}
-      <div style={s.section}>
-        <h2 style={s.h2}>Score Formula</h2>
-        <div style={s.formula}>
-          <strong>Base Score</strong> = (Overdue History × 0.60) + (Utilization × 0.30) + (Facility Mix × 0.10)<br />
-          <strong>Final Score</strong> = Base Score − Classification Penalty (up to −50 pts)<br />
-          <strong>Range:</strong> 0 – 100 &nbsp;|&nbsp; Higher = Lower Risk
-        </div>
+    <>
+      <div style={S.headline}>
+        How CIBxRay calculates credit risk scores from Bangladesh Bank CIB reports — a deterministic, auditable 0–100 scale.
       </div>
 
-      {/* Risk Bands */}
-      <div style={s.section}>
-        <h2 style={s.h2}>Risk Bands</h2>
-        <table style={{ width: "100%", borderCollapse: "collapse", background: "#fff", borderRadius: 8, overflow: "hidden", border: "1px solid #e2e8f0" }}>
-          <thead>
-            <tr>
-              <th style={s.th}>Band</th>
-              <th style={s.th}>Score Range</th>
-              <th style={s.th}>Meaning</th>
+      <div style={S.h3}>Score formula</div>
+      <div style={S.formula}>
+        <strong style={{ color: "#7dd3fc" }}>Base Score</strong> = (Overdue History × 0.60) + (Utilization × 0.30) + (Facility Mix × 0.10)<br />
+        <strong style={{ color: "#7dd3fc" }}>Final Score</strong> = Base Score − Classification Penalty (up to −50 pts)<br />
+        <strong style={{ color: "#7dd3fc" }}>Range:</strong> 0 – 100 &nbsp;|&nbsp; Higher = Lower Risk
+      </div>
+
+      <div style={S.h3}>Risk bands</div>
+      <table style={S.table}>
+        <thead>
+          <tr>
+            <th style={S.th}>Band</th>
+            <th style={S.th}>Score Range</th>
+            <th style={S.th}>Meaning</th>
+          </tr>
+        </thead>
+        <tbody>
+          {BANDS.map(b => (
+            <tr key={b.key}>
+              <td style={S.td}><span style={S.bandBadge(b.color, b.bg)}>{b.label}</span></td>
+              <td style={S.tdMono}>{b.min === -1 ? 0 : b.min} – {b.max}</td>
+              <td style={S.td}>{b.desc}</td>
             </tr>
-          </thead>
-          <tbody>
-            {BANDS.map(b => (
-              <tr key={b.key}>
-                <td style={s.td}><span style={s.badge(b.color, b.bg)}>{b.label}</span></td>
-                <td style={{ ...s.td, fontWeight: 600, fontFamily: "monospace" }}>{b.min === -1 ? 0 : b.min} – {b.max}</td>
-                <td style={s.td}>{b.desc}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          ))}
+        </tbody>
+      </table>
 
-      {/* Scoring Factors */}
-      <div style={s.section}>
-        <h2 style={s.h2}>Scoring Factors</h2>
-        {FACTORS.map(f => (
-          <div key={f.name} style={s.card}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-              <h3 style={{ ...s.h3, margin: 0 }}>{f.name}</h3>
-              <span style={s.badge("#0c4a6e", "#e0f2fe")}>Weight: {f.weight}</span>
-            </div>
-            <p style={{ ...s.p, marginBottom: 8 }}>{f.desc}</p>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr>
-                  <th style={{ ...s.th, width: "25%" }}>Ratio / Condition</th>
-                  <th style={{ ...s.th, width: "20%" }}>Score</th>
-                  <th style={s.th}>Interpretation</th>
+      <div style={S.h3}>Scoring factors</div>
+      {FACTORS.map(f => (
+        <div key={f.name} style={S.factorCard}>
+          <div style={S.factorHead}>
+            <div style={S.factorName}>{f.name}</div>
+            <span style={S.weightBadge}>Weight: {f.weight}</span>
+          </div>
+          <div style={S.factorDesc}>{f.desc}</div>
+          <table style={S.table}>
+            <thead>
+              <tr>
+                <th style={{ ...S.th, width: "25%" }}>Ratio / Condition</th>
+                <th style={{ ...S.th, width: "20%" }}>Score</th>
+                <th style={S.th}>Interpretation</th>
+              </tr>
+            </thead>
+            <tbody>
+              {f.table.map((row, i) => (
+                <tr key={i}>
+                  <td style={S.tdMono}>{row[0]}</td>
+                  <td style={S.tdMono}>{row[1]}</td>
+                  <td style={S.td}>{row[2]}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {f.table.map((row, i) => (
-                  <tr key={i}>
-                    <td style={{ ...s.td, fontWeight: 600, fontFamily: "monospace" }}>{row[0]}</td>
-                    <td style={{ ...s.td, fontFamily: "monospace" }}>{row[1]}</td>
-                    <td style={s.td}>{row[2]}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ))}
-      </div>
-
-      {/* Classification Penalty */}
-      <div style={s.section}>
-        <h2 style={s.h2}>Classification Penalty (up to −50 pts)</h2>
-        <p style={s.p}>{PENALTY_INFO.desc}</p>
-        <table style={{ width: "100%", borderCollapse: "collapse", background: "#fff", borderRadius: 8, overflow: "hidden", border: "1px solid #e2e8f0" }}>
-          <thead>
-            <tr>
-              <th style={s.th}>Classification</th>
-              <th style={s.th}>Penalty Weight</th>
-              <th style={s.th}>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            {PENALTY_INFO.table.map((row, i) => (
-              <tr key={i}>
-                <td style={{ ...s.td, fontWeight: 700 }}>{row[0]}</td>
-                <td style={{ ...s.td, fontFamily: "monospace", fontWeight: 600, color: i >= 2 ? "#dc2626" : "#334155" }}>{row[1]}</td>
-                <td style={s.td}>{row[2]}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Hard Overrides */}
-      <div style={s.section}>
-        <h2 style={s.h2}>Hard Overrides</h2>
-        <p style={s.p}>Certain conditions force the score band regardless of the calculated number:</p>
-        {OVERRIDES.map((o, i) => (
-          <div key={i} style={{ ...s.card, borderLeft: `4px solid ${o.color}`, background: o.bg }}>
-            <div style={{ fontSize: 12.5, fontWeight: 700, color: o.color, marginBottom: 4 }}>{o.trigger}</div>
-            <div style={{ fontSize: 12, color: "#475569" }}>{o.effect}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Red Flags */}
-      <div style={s.section}>
-        <h2 style={s.h2}>Red Flag Definitions</h2>
-        <p style={s.p}>Red flags are independent of the score — they highlight specific risk signals that require attention regardless of overall rating.</p>
-        <table style={{ width: "100%", borderCollapse: "collapse", background: "#fff", borderRadius: 8, overflow: "hidden", border: "1px solid #e2e8f0" }}>
-          <thead>
-            <tr>
-              <th style={s.th}>Flag</th>
-              <th style={s.th}>Trigger Condition</th>
-              <th style={s.th}>Severity</th>
-            </tr>
-          </thead>
-          <tbody>
-            {RED_FLAGS_INFO.map((r, i) => (
-              <tr key={i}>
-                <td style={{ ...s.td, fontWeight: 600 }}>{r.flag}</td>
-                <td style={s.td}>{r.desc}</td>
-                <td style={s.td}>
-                  <span style={s.badge(
-                    r.severity === "Critical" ? "#991b1b" : "#d97706",
-                    r.severity === "Critical" ? "#fef2f2" : "#fffbeb"
-                  )}>{r.severity}</span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Clean CIB */}
-      <div style={s.section}>
-        <h2 style={s.h2}>Clean CIB (No Credit Facilities)</h2>
-        <div style={s.card}>
-          <p style={s.p}>When a CIB report contains zero borrower facilities, the applicant has no credit history. This is treated as <strong>Moderate Risk</strong> — the absence of credit history is neither positive nor negative, but it means:</p>
-          <ul style={{ fontSize: 12.5, color: "#475569", lineHeight: 2, paddingLeft: 20, margin: "8px 0" }}>
-            <li>No repayment track record to assess</li>
-            <li>Cannot evaluate credit discipline or utilization</li>
-            <li>Score is not calculated (shown as "—" with MODERATE label)</li>
-            <li>If borrower facilities exist but guarantor-only, labelled "Clean CIB — No Credit History as Borrower"</li>
-          </ul>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </div>
+      ))}
 
-      {/* Data Source */}
-      <div style={s.section}>
-        <h2 style={s.h2}>Data Source & Methodology</h2>
-        <div style={s.card}>
-          <p style={{ ...s.p, marginBottom: 6 }}><strong>Source:</strong> Bangladesh Bank Credit Information Bureau (CIB) reports in standard PDF format.</p>
-          <p style={{ ...s.p, marginBottom: 6 }}><strong>Parsing:</strong> Client-side PDF.js extraction with deterministic regex patterns — no AI, no data leaves the browser.</p>
-          <p style={{ ...s.p, marginBottom: 6 }}><strong>Scope:</strong> Analysis covers borrower facilities only. Guarantor exposures are displayed but not scored.</p>
-          <p style={{ ...s.p, marginBottom: 0 }}><strong>Limitations:</strong> Accuracy depends on CIB report format consistency. Non-standard layouts may not parse correctly.</p>
+      <div style={S.h3}>Classification penalty (up to −50 pts)</div>
+      <p style={S.p}>{PENALTY_INFO.desc}</p>
+      <table style={S.table}>
+        <thead>
+          <tr>
+            <th style={S.th}>Classification</th>
+            <th style={S.th}>Penalty Weight</th>
+            <th style={S.th}>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          {PENALTY_INFO.table.map((row, i) => (
+            <tr key={i}>
+              <td style={{ ...S.tdMono, color: "#e0f2fe" }}>{row[0]}</td>
+              <td style={{ ...S.tdMono, color: i >= 2 ? "#fca5a5" : "#7dd3fc" }}>{row[1]}</td>
+              <td style={S.td}>{row[2]}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div style={S.h3}>Hard overrides</div>
+      <p style={S.p}>Certain conditions force the score band regardless of the calculated number:</p>
+      {OVERRIDES.map((o, i) => (
+        <div key={i} style={S.overrideCard(o.color)}>
+          <div style={S.overrideTrigger(o.color)}>{o.trigger}</div>
+          <div style={S.overrideEffect}>{o.effect}</div>
         </div>
+      ))}
+
+      <div style={S.h3}>Red flag definitions</div>
+      <p style={S.p}>Red flags are independent of the score — they highlight specific risk signals that require attention regardless of overall rating.</p>
+      <table style={S.table}>
+        <thead>
+          <tr>
+            <th style={S.th}>Flag</th>
+            <th style={S.th}>Trigger Condition</th>
+            <th style={S.th}>Severity</th>
+          </tr>
+        </thead>
+        <tbody>
+          {RED_FLAGS_INFO.map((r, i) => (
+            <tr key={i}>
+              <td style={{ ...S.td, color: "#e0f2fe", fontWeight: 600, whiteSpace: "nowrap" }}>{r.flag}</td>
+              <td style={S.td}>{r.desc}</td>
+              <td style={S.td}>
+                <span style={S.sevBadge(r.severity === "Critical" ? "#fca5a5" : "#fcd34d")}>{r.severity}</span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div style={S.h3}>Clean CIB (no credit facilities)</div>
+      <div style={S.infoCard}>
+        <p style={{ ...S.p, marginBottom: 4 }}>When a CIB report contains zero borrower facilities, the applicant has no credit history. This is treated as <strong style={{ color: "#e0f2fe" }}>Moderate Risk</strong> — the absence of credit history is neither positive nor negative, but it means:</p>
+        <ul style={S.ul}>
+          <li>No repayment track record to assess</li>
+          <li>Cannot evaluate credit discipline or utilization</li>
+          <li>Score is not calculated (shown as "—" with MODERATE label)</li>
+          <li>If borrower facilities exist but guarantor-only, labelled "Clean CIB — No Credit History as Borrower"</li>
+        </ul>
       </div>
 
-      <div style={{ textAlign: "center", fontSize: 11, color: "#94a3b8", marginTop: 40 }}>
-        CIBxRay Risk Methodology v1.0 — For internal credit assessment only
+      <div style={S.h3}>Data source &amp; methodology</div>
+      <div style={S.infoCard}>
+        <p style={{ ...S.p, marginBottom: 6 }}><strong style={{ color: "#e0f2fe" }}>Source:</strong> Bangladesh Bank Credit Information Bureau (CIB) reports in standard PDF format.</p>
+        <p style={{ ...S.p, marginBottom: 6 }}><strong style={{ color: "#e0f2fe" }}>Parsing:</strong> Client-side PDF.js extraction with deterministic regex patterns — no AI, no data leaves the browser.</p>
+        <p style={{ ...S.p, marginBottom: 6 }}><strong style={{ color: "#e0f2fe" }}>Scope:</strong> Analysis covers borrower facilities only. Guarantor exposures are displayed but not scored.</p>
+        <p style={{ ...S.p, marginBottom: 0 }}><strong style={{ color: "#e0f2fe" }}>Limitations:</strong> Accuracy depends on CIB report format consistency. Non-standard layouts may not parse correctly.</p>
       </div>
-    </div>
+
+      <div style={S.footer}>CIBxRay Risk Methodology v1.0 — For internal credit assessment only</div>
+    </>
   );
 }
