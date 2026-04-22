@@ -94,21 +94,36 @@ const S = {
     lineHeight: 1.5,
   },
   localBadge: {
-    display: "flex",
-    justifyContent: "space-around",
+    display: "grid",
+    gridTemplateColumns: "repeat(5, 1fr)",
     gap: 6,
     marginBottom: 18,
-    fontSize: 10.5,
-    color: "#7dd3fc",
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
-    fontWeight: 600,
   },
   localCell: {
-    flex: 1,
     textAlign: "center",
-    padding: "4px 0",
-    borderTop: "1px dashed rgba(56,189,248,0.3)",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+  },
+  connectorPipe: {
+    width: 1,
+    height: 18,
+    background: "rgba(148,163,184,0.55)",
+  },
+  connectorArrow: {
+    fontSize: 10,
+    color: "rgba(148,163,184,0.75)",
+    marginTop: -2,
+    marginBottom: 4,
+    lineHeight: 1,
+  },
+  localLabel: {
+    fontSize: 11.5,
+    color: "#94a3b8",
+    fontFamily: "'SF Mono', Menlo, Consolas, monospace",
+    letterSpacing: 0,
+    textTransform: "none",
+    fontWeight: 400,
   },
 };
 
@@ -159,7 +174,11 @@ export default function HowItWorks() {
       </div>
       <div style={S.localBadge}>
         {STEPS.map((s) => (
-          <div key={s.n} style={S.localCell}>{"↓ your device"}</div>
+          <div key={s.n} style={S.localCell}>
+            <div style={S.connectorPipe} />
+            <div style={S.connectorArrow}>{"▼"}</div>
+            <div style={S.localLabel}>your device</div>
+          </div>
         ))}
       </div>
       <div style={S.bannerNote}>

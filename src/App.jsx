@@ -248,7 +248,7 @@ export default function App() {
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
           </button>
-          <button onClick={() => { setView("explainer"); setActiveId(null); }} title="Risk Grading Methodology" style={{ background: "rgba(14,165,233,0.15)", border: "1px solid rgba(56,189,248,0.3)", color: "#7dd3fc", width: 28, height: 28, borderRadius: "50%", cursor: "pointer", fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>?</button>
+          <button onClick={() => setInfoModal("methodology")} title="Risk Grading Methodology" style={{ background: "rgba(14,165,233,0.15)", border: "1px solid rgba(56,189,248,0.3)", color: "#7dd3fc", width: 28, height: 28, borderRadius: "50%", cursor: "pointer", fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>?</button>
           <button onClick={() => { clearPrintPayload(localStorage); setReports([]); setFileLog([]); setView("upload"); setActiveId(null); setTab("summary"); counter.current = 0; }} title="Reset — Clear all reports" style={{ background: "rgba(14,165,233,0.15)", border: "1px solid rgba(56,189,248,0.3)", color: "#7dd3fc", width: 28, height: 28, borderRadius: "50%", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>{"\u21BB"}</button>
           <span style={{ fontSize: 11, color: "#7dd3fc" }}>{reports.length} report{reports.length !== 1 ? "s" : ""}</span>
           <a href="/api/logout" title="Sign out" style={{ background: "rgba(14,165,233,0.15)", border: "1px solid rgba(56,189,248,0.3)", color: "#7dd3fc", width: 28, height: 28, borderRadius: "50%", textDecoration: "none", fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>{"\u23FB"}</a>
@@ -333,13 +333,8 @@ export default function App() {
         {/* CONTENT */}
         <div style={{ flex: 1, overflow: "auto", padding: 20 }}>
 
-          {/* EXPLAINER */}
-          {view === "explainer" && (
-            <ScoreExplainer onBack={() => { setView(reports.length ? "batch" : "upload"); setActiveId(reports.length ? "batch" : null); }} />
-          )}
-
           {/* UPLOAD */}
-          {view !== "explainer" && (view === "upload" || !reports.length) && (
+          {(view === "upload" || !reports.length) && (
             <div style={{ maxWidth: 650, margin: "40px auto" }}>
               {processing ? (
                 /* ── PROGRESS BAR ── */
@@ -1038,6 +1033,11 @@ export default function App() {
       {infoModal === "security" && (
         <InfoModal title="Security" onClose={() => setInfoModal(null)}>
           <Security />
+        </InfoModal>
+      )}
+      {infoModal === "methodology" && (
+        <InfoModal title="Risk Grading & Score Methodology" onClose={() => setInfoModal(null)}>
+          <ScoreExplainer />
         </InfoModal>
       )}
     </div>
