@@ -118,6 +118,7 @@ export default function App() {
     { key: "summary", label: "Summary & Rating" },
     { key: "borrower", label: "Borrower" },
     { key: "guarantor", label: "Guarantor" },
+    { key: "signals", label: "Behavioral Signals" },
     { key: "redflags", label: "Red Flags" },
     { key: "linked", label: "Linked Entities" },
     { key: "export", label: "Export" },
@@ -568,8 +569,6 @@ export default function App() {
                     )}
 
                     {active?.stamp && <AuditStamp stamp={active.stamp} />}
-
-                    <BehavioralSignals report={active} />
                   </div>
                 )}
 
@@ -624,6 +623,11 @@ export default function App() {
                       </div>
                     )}
                   </div>
+                )}
+
+                {/* BEHAVIORAL SIGNALS TAB */}
+                {tab === "signals" && (
+                  <BehavioralSignals report={active} />
                 )}
 
                 {/* RED FLAGS TAB */}
