@@ -23,6 +23,9 @@ import ExposureTrends from './components/report/ExposureTrends.jsx';
 import CreditCardDetails from './components/report/CreditCardDetails.jsx';
 import PrintReport from './components/PrintReport.jsx';
 import ParseQualityBanner from './components/report/ParseQualityBanner.jsx';
+import InfoModal from './components/info/InfoModal.jsx';
+import HowItWorks from './components/info/HowItWorks.jsx';
+import Security from './components/info/Security.jsx';
 import { stripRawText, clearPrintPayload, PRINT_PAYLOAD_KEY } from '../lib/reportHygiene.js';
 
 const getBorrowerFacs = (r) => r.facilities.filter(f => f.role === "Borrower" || f.role === "CoBorrower");
@@ -36,6 +39,7 @@ export default function App() {
   const [activeId, setActiveId] = useState(null);
   const [view, setView] = useState("upload");
   const [tab, setTab] = useState("summary");
+  const [infoModal, setInfoModal] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [progressCurrent, setProgressCurrent] = useState(0);
   const [progressTotal, setProgressTotal] = useState(0);
@@ -232,6 +236,18 @@ export default function App() {
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           {reports.length > 1 && <button onClick={() => doExport(reports, "batch")} style={{ ...S.bo, background: "rgba(14,165,233,0.15)", color: "#7dd3fc", border: "1px solid rgba(56,189,248,0.3)", fontSize: 11 }}>Batch Export ({reports.length})</button>}
+          <button onClick={() => setInfoModal("how")} title="How the App Works" style={{ background: "rgba(14,165,233,0.15)", border: "1px solid rgba(56,189,248,0.3)", color: "#7dd3fc", width: 28, height: 28, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="16" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12.01" y2="8" />
+            </svg>
+          </button>
+          <button onClick={() => setInfoModal("security")} title="Security" style={{ background: "rgba(14,165,233,0.15)", border: "1px solid rgba(56,189,248,0.3)", color: "#7dd3fc", width: 28, height: 28, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+          </button>
           <button onClick={() => { setView("explainer"); setActiveId(null); }} title="Risk Grading Methodology" style={{ background: "rgba(14,165,233,0.15)", border: "1px solid rgba(56,189,248,0.3)", color: "#7dd3fc", width: 28, height: 28, borderRadius: "50%", cursor: "pointer", fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>?</button>
           <button onClick={() => { clearPrintPayload(localStorage); setReports([]); setFileLog([]); setView("upload"); setActiveId(null); setTab("summary"); counter.current = 0; }} title="Reset — Clear all reports" style={{ background: "rgba(14,165,233,0.15)", border: "1px solid rgba(56,189,248,0.3)", color: "#7dd3fc", width: 28, height: 28, borderRadius: "50%", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>{"\u21BB"}</button>
           <span style={{ fontSize: 11, color: "#7dd3fc" }}>{reports.length} report{reports.length !== 1 ? "s" : ""}</span>
@@ -1014,6 +1030,16 @@ export default function App() {
           )}
         </div>
       </div>
+      {infoModal === "how" && (
+        <InfoModal title="How the App Works" onClose={() => setInfoModal(null)}>
+          <HowItWorks />
+        </InfoModal>
+      )}
+      {infoModal === "security" && (
+        <InfoModal title="Security" onClose={() => setInfoModal(null)}>
+          <Security />
+        </InfoModal>
+      )}
     </div>
   );
 }
