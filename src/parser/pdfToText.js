@@ -10,6 +10,7 @@ export async function pdfToText(arrayBuffer) {
 
   let text = "";
   for (let i = 1; i <= pdf.numPages; i++) {
+    text += `\n<<PAGE ${i}>>\n`;
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
     let lastY = null;
