@@ -162,12 +162,56 @@ export function parseBBCIB(text, fileName) {
     fiNames[fnm[1]] = fnm[2].trim();
   }
 
+  // ── MAIN REPRESENTATIVE (corporate only) ──
+  // Derive from the first "Managing director" entry in the OWNERS LIST.
+  // The OWNERS LIST rows look like:
+  //   " <CIB-code>   <NAME>   Managing director   ###"
+  const mdMatch = fullText.match(/([A-Z][A-Z\s.]+?)\s{3,}Managing director/m);
+  report.subject.mainRepresentative =
+    (report.subject.subjectType === "COMPANY" && mdMatch)
+      ? mdMatch[1].trim()
+      : "";
+
+  // ── PAGE POSITION INDEX ──
+  // Build an array of { offset, pageNo } for all <<PAGE n>> markers so we can
+  // quickly look up which page a given contract block starts on.
+  const pageMarkers = [];
+  const pageMarkerRe = /<<PAGE\s+(\d+)>>/g;
+  let pmMatch;
+  while ((pmMatch = pageMarkerRe.exec(fullText)) !== null) {
+    pageMarkers.push({ offset: pmMatch.index, pageNo: parseInt(pmMatch[1]) });
+  }
+
+  /** Returns the page number of the most-recent <<PAGE n>> before `offset`. */
+  const getPageNo = (offset) => {
+    let pageNo = null;
+    for (const marker of pageMarkers) {
+      if (marker.offset <= offset) pageNo = marker.pageNo;
+      else break;
+    }
+    return pageNo;
+  };
+
   // ── CONTRACT PARSING ──
+  // Split on the contract-block header, but also track the starting offset of
+  // each piece in the original text so we can call getPageNo().
   const contractBlocks = fullText.split(/(?=Ref\s+FI code\s+Branch code\s+CIB contract)/);
+
+  // Compute the character offset of each block start in fullText.
+  const blockOffsets = [];
+  {
+    let cursor = 0;
+    for (const block of contractBlocks) {
+      blockOffsets.push(cursor);
+      cursor += block.length;
+    }
+  }
 
   for (let i = 1; i < contractBlocks.length; i++) {
     const block = contractBlocks[i];
     if (block.length < 50) continue;
+
+    const blockStartOffset = blockOffsets[i];
 
     // Contract code: may be on a "###   ###   CODE   ###" line, or after "CIB contract\ncode", or explicit FI code line
     const ccMatch = block.match(/###\s+###\s+([A-Z]\d[\w]+)/) ||
@@ -238,6 +282,58 @@ export function parseBBCIB(text, fileName) {
     const lawsuitMatch = block.match(/Date of Law suit:\s*(\d{2}\/\d{2}\/\d{4})/);
     const lawsuit = lawsuitMatch ? lawsuitMatch[1] : "";
 
+    // ── DevReq-2 Phase 1 new fields ──
+
+    // pageNo — nearest <<PAGE n>> marker before this block's start offset
+    const pageNo = getPageNo(blockStartOffset);
+
+    // securityType — "Security Type: <value>" where value ends at whitespace
+    // or "Remarks:" (often blank in real CIBs, so default to "")
+    const secTypeMatch = block.match(/Security Type:\s*([\w()\s]+?)(?:\s{3,}|\s*Remarks:|\n)/i);
+    const securityType = secTypeMatch ? secTypeMatch[1].trim() : "";
+
+    // disbursementAmount — labelled "Total Disbursement Amount:" or
+    // "Total Disbursement\nAmount:" or the compact form where the amount
+    // appears on the same line as "Total Disbursement" before "Payments periodicity"
+    const disbMatch =
+      block.match(/Total Disbursement\s+Amount:\s*([\d,]+)/i) ||
+      block.match(/Total Disbursement\s*\n\s*Amount:\s*([\d,]+)/i) ||
+      block.match(/Total Disbursement\s+([\d,]+)\s/i);
+    const disbursementAmount = disbMatch ? parseNum(disbMatch[1]) : 0;
+
+    // totalInstallments — "Total number of installments: N" or
+    // "Total number of          N\ninstallments:"
+    const totInstMatch =
+      block.match(/Total number of\s+installments:\s*(\d+)/i) ||
+      block.match(/Total number of\s+([\d]+)\s[\s\S]{0,60}?installments:/i);
+    const totalInstallments = totInstMatch ? parseInt(totInstMatch[1]) : null;
+
+    // remainingInstallmentsCount — "Remaining installments\nNumber: N" or
+    // "Remaining       N\ninstallments Number:" or
+    // "Remaining installments    N  Reorganized credit:"
+    // Must NOT match "Remaining installments Amount:" (that's an amount, not count).
+    const remCntMatch =
+      block.match(/Remaining\s+installments\s+Number:\s*(\d+)/i) ||
+      block.match(/Remaining\s+([\d]+)\s+installments\s+Number:/i) ||
+      block.match(/Remaining\s+installments\s+(\d+)\s+Reorganized/i);
+    const remainingInstallmentsCount = remCntMatch ? parseInt(remCntMatch[1]) : null;
+
+    // paymentPeriodicity — "Payments periodicity: <value> [Installments]"
+    // Value is one of: Monthly, Bimonthly, Quarterly, Half-Yearly, etc.
+    // "Installments" may or may not follow, and may be on next line.
+    const periodicityMatch = block.match(
+      /Payments periodicity:\s*(Monthly|Bimonthly|Quarterly|Half[-\s]?Yearly)/i
+    );
+    const paymentPeriodicity = periodicityMatch ? periodicityMatch[1] : "";
+
+    // isForeign — true if the contract block describes a foreign-currency facility.
+    // Indicators: facility type contains "Foreign", or the block contains
+    // "Foreign Lender's" or "Approved Foreign\s+Currency:" with a non-BDT currency.
+    const isForeign =
+      /^Foreign\b/i.test(facDesc) ||
+      /Foreign Lender'?s/i.test(block) ||
+      /Approved Foreign\s*\n?\s*Currency:\s*(EURO|USD|US DOLLAR|CHINESE YUAN|SWISS FRANC|POUND STERLING|JAPANESE YEN|SINGAPORE DOLLAR|ACU DOLLAR|AUSTRALIAN DOLLAR)/i.test(block);
+
     // ── Extract ALL monthly history rows ──
     const histSection = block.match(/Monthly History[\s\S]*?(?=Contribution History|$)/);
     let latestOutstanding = 0, latestOverdue = 0, latestStatus = "STD", latestLimit = sanctionLimit;
@@ -303,6 +399,14 @@ export function parseBBCIB(text, fileName) {
       wdRemarks,
       lawsuit,
       history: history.slice().reverse(),
+      // ── DevReq-2 Phase 1 additions ──
+      pageNo,
+      securityType,
+      disbursementAmount,
+      totalInstallments,
+      remainingInstallmentsCount,
+      paymentPeriodicity,
+      isForeign,
     });
   }
 
