@@ -287,10 +287,15 @@ export function parseBBCIB(text, fileName) {
     // pageNo — nearest <<PAGE n>> marker before this block's start offset
     const pageNo = getPageNo(blockStartOffset);
 
-    // securityType — "Security Type: <value>" where value ends at whitespace
-    // or "Remarks:" (often blank in real CIBs, so default to "")
-    const secTypeMatch = block.match(/Security Type:\s*([\w()\s]+?)(?:\s{3,}|\s*Remarks:|\n)/i);
-    const securityType = secTypeMatch ? secTypeMatch[1].trim() : "";
+    // securityType — "Security Type: <value>" where value ends at "Remarks:",
+    // a newline, or end-of-string (whichever comes first on the same line).
+    // The field is often blank in real CIBs — blank entries look like:
+    //   "Security Type:          Remarks:"
+    // Populated entries look like:
+    //   "Security Type:   80 ( Without any         Remarks:"
+    //   "Security Type:   60 ( Financial     Remarks:"
+    const secTypeRaw = block.match(/Security Type:[ \t]*(.*?)[ \t]*(?:Remarks:|[\r\n]|$)/);
+    const securityType = secTypeRaw ? secTypeRaw[1].trim() : "";
 
     // disbursementAmount — labelled "Total Disbursement Amount:" or
     // "Total Disbursement\nAmount:" or the compact form where the amount
@@ -301,20 +306,28 @@ export function parseBBCIB(text, fileName) {
       block.match(/Total Disbursement\s+([\d,]+)\s/i);
     const disbursementAmount = disbMatch ? parseNum(disbMatch[1]) : 0;
 
-    // totalInstallments — "Total number of installments: N" or
-    // "Total number of          N\ninstallments:"
+    // totalInstallments — several layout variants seen in real CIBs:
+    //   a) "Total number of installments: 60" (same line, short layout)
+    //   b) "Total number of          20\ninstallments:" (number before wrap)
+    //   c) "Total number of               4               Number of time(s)\n
+    //       <history data>\ninstallments:" (number then 2 lines until label)
+    // Pattern (a): label then colon then number on the same line.
+    // Pattern (b)/(c): number immediately after "Total number of", then "installments:"
+    //   appears at the start of a later line (up to ~400 chars).
     const totInstMatch =
       block.match(/Total number of\s+installments:\s*(\d+)/i) ||
-      block.match(/Total number of\s+([\d]+)\s[\s\S]{0,60}?installments:/i);
+      block.match(/Total number of\s+(\d+)[\s\S]*?\ninstallments:/i);
     const totalInstallments = totInstMatch ? parseInt(totInstMatch[1]) : null;
 
-    // remainingInstallmentsCount — "Remaining installments\nNumber: N" or
-    // "Remaining       N\ninstallments Number:" or
-    // "Remaining installments    N  Reorganized credit:"
-    // Must NOT match "Remaining installments Amount:" (that's an amount, not count).
+    // remainingInstallmentsCount — several layout variants seen in real CIBs:
+    //   a) "Remaining installments Number: 2"  / "Remaining installments\nNumber: 2"
+    //   b) "Remaining       2    Reorganized credit:...\ninstallments Number:" (Akij variant:
+    //      value is on the "Remaining" line, label wraps to next line with filler in between)
+    //   c) "Remaining installments    45    Reorganized credit:"
+    // Must NOT match "Remaining installments Amount:" (that's the BDT amount field).
     const remCntMatch =
-      block.match(/Remaining\s+installments\s+Number:\s*(\d+)/i) ||
-      block.match(/Remaining\s+([\d]+)\s+installments\s+Number:/i) ||
+      block.match(/Remaining\s+installments[\s\S]{0,5}?Number:\s*(\d+)/i) ||
+      block.match(/Remaining\s+(\d+)\s+(?:Reorganized[\s\S]*?)?installments\s+Number:/i) ||
       block.match(/Remaining\s+installments\s+(\d+)\s+Reorganized/i);
     const remainingInstallmentsCount = remCntMatch ? parseInt(remCntMatch[1]) : null;
 
