@@ -12,6 +12,7 @@ import { doExport } from './export/excelExport';
 import { doRetailExport } from './export/retailExport';
 import { doWholesaleExport } from './export/wholesaleExport';
 import { doCommitteeSummaryExport } from './export/committeeSummaryExport';
+import { doUserManualExport } from './export/userManualPptx';
 import Gauge from './components/shared/Gauge';
 import FacTable from './components/shared/FacTable';
 import FacSummaryBar from './components/shared/FacSummaryBar';
@@ -303,6 +304,12 @@ export default function App() {
             </svg>
           </button>
           <button onClick={() => setInfoModal("methodology")} title="Risk Grading Methodology" style={{ background: "rgba(14,165,233,0.15)", border: "1px solid rgba(56,189,248,0.3)", color: "#7dd3fc", width: 28, height: 28, borderRadius: "50%", cursor: "pointer", fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>?</button>
+          <button onClick={() => { doUserManualExport().catch(err => { console.error('User Manual export error:', err); alert('Could not download User Manual. ' + (err && err.message ? err.message : '')); }); }} title="Download User Manual (.pptx)" style={{ background: "rgba(14,165,233,0.15)", border: "1px solid rgba(56,189,248,0.3)", color: "#7dd3fc", width: 28, height: 28, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+            </svg>
+          </button>
           <button onClick={() => { clearPrintPayload(localStorage); setReports([]); setFileLog([]); setView("upload"); setActiveId(null); setTab("summary"); counter.current = 0; }} title="Reset — Clear all reports" style={{ background: "rgba(14,165,233,0.15)", border: "1px solid rgba(56,189,248,0.3)", color: "#7dd3fc", width: 28, height: 28, borderRadius: "50%", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>{"\u21BB"}</button>
           <span style={{ fontSize: 11, color: "#7dd3fc" }}>{reports.length} report{reports.length !== 1 ? "s" : ""}</span>
           <a href="/api/logout" title="Sign out" style={{ background: "rgba(14,165,233,0.15)", border: "1px solid rgba(56,189,248,0.3)", color: "#7dd3fc", width: 28, height: 28, borderRadius: "50%", textDecoration: "none", fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>{"\u23FB"}</a>
