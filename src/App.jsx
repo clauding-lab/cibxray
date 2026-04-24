@@ -9,6 +9,7 @@ import { assessParseQuality } from './parser/parseQuality';
 import { computeStamp } from './stamp/computeStamp.js';
 import { pdfToText } from './parser/pdfToText';
 import { doExport } from './export/excelExport';
+import { doRetailExport } from './export/retailExport';
 import Gauge from './components/shared/Gauge';
 import FacTable from './components/shared/FacTable';
 import FacSummaryBar from './components/shared/FacSummaryBar';
@@ -820,28 +821,37 @@ export default function App() {
                   <div style={{ maxWidth: 550, margin: "0 auto" }}>
                     <div style={{ ...S.card, textAlign: "center", padding: 28 }}>
                       <div style={{ fontSize: 32, marginBottom: 10 }}>{"\u2B07\uFE0F"}</div>
-                      <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>Export Individual Report</h3>
-                      <p style={{ color: "#64748b", fontSize: 12.5, marginBottom: 20, lineHeight: 1.6 }}>Multi-sheet .xlsx: Summary with score breakdown + all facilities.</p>
-                      <button onClick={() => doExport([active], "individual")} style={S.bp}>Download {active.reportNo}.xlsx</button>
+                      <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>Retail Lending Analytics</h3>
+                      <p style={{ color: "#64748b", fontSize: 12.5, marginBottom: 20, lineHeight: 1.6 }}>Formatted to match the CRM-CD Dashboard V2 template — 9 sheets, amounts in BDT Million.</p>
+                      <button onClick={() => doRetailExport(active)} style={S.bp}>Download Retail Lending Analytics.xlsx</button>
                     </div>
-                    {(() => {
-                      const key = active.subject.nid || active.subject.regNo || "";
-                      const grp = key ? groups.find(g => g.key === key) : null;
-                      if (grp) return (
-                        <div style={{ ...S.card, textAlign: "center", padding: 20 }}>
-                          <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: 6 }}>Export Linked Group ({grp.reports.length} reports)</h4>
-                          <p style={{ color: "#64748b", fontSize: 12, marginBottom: 14 }}>Includes accumulated group analysis sheet.</p>
-                          <button onClick={() => doExport(grp.reports, "linked", grp.name)} style={S.bo}>Download Linked .xlsx</button>
-                        </div>
-                      );
-                      return null;
-                    })()}
-                    {reports.length > 1 && (
-                      <div style={{ ...S.card, textAlign: "center", padding: 20 }}>
-                        <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: 6 }}>Batch Export ({reports.length} reports)</h4>
-                        <button onClick={() => doExport(reports, "batch")} style={S.bo}>Download Batch .xlsx</button>
+
+                    {/* Technical Export — demoted legacy exporter per spec §9 */}
+                    <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid #1f2937" }}>
+                      <h4 style={{ fontSize: 13, fontWeight: 600, color: "#64748b", marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Technical Export</h4>
+                      <p style={{ fontSize: 11, color: "#64748b", marginBottom: 14, lineHeight: 1.5 }}>Raw score breakdown + full facility list. For internal review only.</p>
+                      <div style={{ ...S.card, textAlign: "center", padding: 18 }}>
+                        <h5 style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, color: "#94a3b8" }}>Individual Report</h5>
+                        <button onClick={() => doExport([active], "individual")} style={{ ...S.bo, fontSize: 11 }}>Download {active.reportNo}.xlsx</button>
                       </div>
-                    )}
+                      {(() => {
+                        const key = active.subject.nid || active.subject.regNo || "";
+                        const grp = key ? groups.find(g => g.key === key) : null;
+                        if (grp) return (
+                          <div style={{ ...S.card, textAlign: "center", padding: 18 }}>
+                            <h5 style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, color: "#94a3b8" }}>Linked Group ({grp.reports.length} reports)</h5>
+                            <button onClick={() => doExport(grp.reports, "linked", grp.name)} style={{ ...S.bo, fontSize: 11 }}>Download Linked .xlsx</button>
+                          </div>
+                        );
+                        return null;
+                      })()}
+                      {reports.length > 1 && (
+                        <div style={{ ...S.card, textAlign: "center", padding: 18 }}>
+                          <h5 style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, color: "#94a3b8" }}>Batch ({reports.length} reports)</h5>
+                          <button onClick={() => doExport(reports, "batch")} style={{ ...S.bo, fontSize: 11 }}>Download Batch .xlsx</button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
