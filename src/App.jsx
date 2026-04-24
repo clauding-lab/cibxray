@@ -111,7 +111,11 @@ export default function App() {
     // popup-blocker guard ensure we scrub the key on any failure path.
     try {
       const sanitized = stripRawText(report);
-      const payload = JSON.stringify({ writtenAt: Date.now(), report: sanitized, score, band });
+      // Include the full reports list so PrintReport's Group summary table
+      // can render in multi-PDF (wholesale) contexts. Gated on length > 1
+      // in the consumer — single-PDF print hides the group table.
+      const sanitizedReports = (reports || []).map(stripRawText);
+      const payload = JSON.stringify({ writtenAt: Date.now(), report: sanitized, reports: sanitizedReports, score, band });
       localStorage.setItem(PRINT_PAYLOAD_KEY, payload);
       const win = window.open('/#print', '_blank');
       if (!win) {
