@@ -83,10 +83,10 @@ export default function ExposureTrends({ report, asOf = new Date() }) {
           Maximum observed within the CIB's monthly history window (typically 12–24 months; not a lifetime maximum).
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
-          <Metric label="Peak Term Loan Exposure"            value={`BDT ${fmt(peakInst.peakAmount)}`}    sub={peakSub(peakInst)} />
-          <Metric label="Peak Non-Installment Exposure"      value={`BDT ${fmt(peakNonInst.peakAmount)}`} sub={peakSub(peakNonInst)} />
-          <Metric label="Peak Cumulative Exposure"           value={`BDT ${fmt(peakAll.peakAmount)}`}     sub={peakSub(peakAll)} />
-          <Metric label="Peak Cumulative EMI (Monthly)"      value={`BDT ${fmt(peakEmi.peakAmount)}`}     sub={peakSub(peakEmi)} />
+          <Metric label="Peak Term Loan Exposure"            value={`৳${fmt(peakInst.peakAmount)}`}    sub={peakSub(peakInst)} />
+          <Metric label="Peak Non-Installment Exposure"      value={`৳${fmt(peakNonInst.peakAmount)}`} sub={peakSub(peakNonInst)} />
+          <Metric label="Peak Cumulative Exposure"           value={`৳${fmt(peakAll.peakAmount)}`}     sub={peakSub(peakAll)} />
+          <Metric label="Peak Cumulative EMI (Monthly)"      value={`৳${fmt(peakEmi.peakAmount)}`}     sub={peakSub(peakEmi)} />
         </div>
       </div>
 
@@ -136,7 +136,7 @@ export default function ExposureTrends({ report, asOf = new Date() }) {
         </div>
         <PatternTable
           headers={['Contract', 'Institution', 'Type', 'Value', 'Period', 'Months']}
-          rows={unchanged.map(u => [u.contractCode, u.institution, u.type, `BDT ${fmt(u.flatValue)}`, `${u.fromDate} → ${u.toDate}`, u.monthCount])}
+          rows={unchanged.map(u => [u.contractCode, u.institution, u.type, `৳${fmt(u.flatValue)}`, `${u.fromDate} → ${u.toDate}`, u.monthCount])}
         />
 
         <div style={sectionSub}>
@@ -150,7 +150,7 @@ export default function ExposureTrends({ report, asOf = new Date() }) {
         </div>
         <PatternTable
           headers={['Contract', 'Institution', 'Type', 'Date', 'Overdue', 'NPI', 'Status']}
-          rows={sudden.map(s => [s.contractCode, s.institution, s.type, s.date, `BDT ${fmt(s.overdueAmount)}`, s.npi, s.classification])}
+          rows={sudden.map(s => [s.contractCode, s.institution, s.type, s.date, `৳${fmt(s.overdueAmount)}`, s.npi, s.classification])}
         />
 
         <div style={sectionSub}>

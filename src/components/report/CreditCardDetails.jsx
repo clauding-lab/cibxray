@@ -42,8 +42,8 @@ function DelinquencyTimeline({ timeline }) {
           const cls = CLS[row.status] || CLS.STD;
           const hasOverdue = (row.overdue || 0) > 0 || (row.npi || 0) >= 1;
           const title = `${row.dateStr} · ${cls.label}` +
-            (row.outstanding != null ? ` · Out BDT ${fmt(row.outstanding)}` : '') +
-            (hasOverdue ? ` · Overdue BDT ${fmt(row.overdue)} (NPI ${row.npi})` : '') +
+            (row.outstanding != null ? ` · Out ৳${fmt(row.outstanding)}` : '') +
+            (hasOverdue ? ` · Overdue ৳${fmt(row.overdue)} (NPI ${row.npi})` : '') +
             (row.utilization != null ? ` · Util ${row.utilization.toFixed(1)}%` : '');
           return (
             <div key={i} title={title} style={{ flex: '1 0 70px', minWidth: 70 }}>
@@ -100,8 +100,8 @@ export default function CreditCardDetails({ report, asOf = new Date() }) {
           <Metric label="Total Cards"         value={summary.totalCards}   sub={`${summary.livingCards} live · ${summary.totalCards - summary.livingCards} terminated`} />
           <Metric label="New in Last 12M"     value={summary.newCards12M} />
           <Metric label="Overall Utilization" value={summary.overallUtilization != null ? `${summary.overallUtilization.toFixed(1)}%` : '—'}
-                  sub={`BDT ${fmt(summary.totalOutstanding)} / BDT ${fmt(summary.totalSanction)}`} />
-          <Metric label="Total Sanction"      value={`BDT ${fmt(summary.totalSanction)}`}    sub="Living cards only" />
+                  sub={`৳${fmt(summary.totalOutstanding)} / ৳${fmt(summary.totalSanction)}`} />
+          <Metric label="Total Sanction"      value={`৳${fmt(summary.totalSanction)}`}    sub="Living cards only" />
         </div>
       </div>
 
@@ -120,8 +120,8 @@ export default function CreditCardDetails({ report, asOf = new Date() }) {
 
           {/* Per-card metrics grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 8, marginBottom: 14 }}>
-            <Metric label="Sanction Limit"     value={`BDT ${fmt(card.sanctionLimit)}`} />
-            <Metric label="Current Outstanding" value={`BDT ${fmt(card.currentOutstanding)}`} />
+            <Metric label="Sanction Limit"     value={`৳${fmt(card.sanctionLimit)}`} />
+            <Metric label="Current Outstanding" value={`৳${fmt(card.currentOutstanding)}`} />
             <Metric label="Current Utilization" value={card.currentUtilization != null ? `${card.currentUtilization.toFixed(1)}%` : '—'} />
             <Metric label="Avg Util. (12M)"    value={card.avgUtilization != null ? `${card.avgUtilization.toFixed(1)}%` : '—'} />
             <Metric label="Max Util. (12M)"    value={card.maxUtilization != null ? `${card.maxUtilization.toFixed(1)}%` : '—'} />

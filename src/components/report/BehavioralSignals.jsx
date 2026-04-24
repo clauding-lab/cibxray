@@ -48,28 +48,28 @@ export default function BehavioralSignals({ report, asOf = new Date() }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
         <Metric
           label="Live Loans EMI (Monthly)"
-          value={`BDT ${fmt(metrics.liveEmi)}`}
+          value={`৳${fmt(metrics.liveEmi)}`}
           sub="Sum of installment amount across live Borrower/Co-Borrower facilities"
         />
         <Metric
           label="Guaranteed Installment Exposure"
-          value={`BDT ${fmt(metrics.guarInst)}`}
+          value={`৳${fmt(metrics.guarInst)}`}
           sub="Live installment facilities where role is Guarantor"
         />
         <Metric
           label="Guaranteed Non-Installment Exposure"
-          value={`BDT ${fmt(metrics.guarNonInst)}`}
+          value={`৳${fmt(metrics.guarNonInst)}`}
           sub="Live CC/OD/demand loan facilities where role is Guarantor"
         />
         <Metric
           label="New Installment Facilities (Last 24M)"
-          value={`${metrics.newInst.count} facility${metrics.newInst.count === 1 ? '' : 'ies'}`}
-          sub={`Total sanction: BDT ${fmt(metrics.newInst.totalAmount)}`}
+          value={`${metrics.newInst.count} facilit${metrics.newInst.count === 1 ? 'y' : 'ies'}`}
+          sub={`Total sanction: ৳${fmt(metrics.newInst.totalAmount)}`}
         />
         <Metric
           label="New Non-Installment Facilities (Last 24M)"
-          value={`${metrics.newNonInst.count} facility${metrics.newNonInst.count === 1 ? '' : 'ies'}`}
-          sub={`Total sanction: BDT ${fmt(metrics.newNonInst.totalAmount)}`}
+          value={`${metrics.newNonInst.count} facilit${metrics.newNonInst.count === 1 ? 'y' : 'ies'}`}
+          sub={`Total sanction: ৳${fmt(metrics.newNonInst.totalAmount)}`}
         />
         <Metric
           label="Terminated Installment Loans"
