@@ -911,8 +911,7 @@ export default function App() {
                     {/* Retail Lending Analytics */}
                     <div style={{ ...S.card, textAlign: "center", padding: 28 }}>
                       <div style={{ fontSize: 32, marginBottom: 10 }}>{"\u2B07\uFE0F"}</div>
-                      <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>Retail Lending Analytics</h3>
-                      <p style={{ color: "#64748b", fontSize: 12.5, marginBottom: 20, lineHeight: 1.6 }}>Formatted to match the CRM-CD Dashboard V2 template — 9 sheets, amounts in BDT Million.</p>
+                      <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 14 }}>Retail Lending Analytics</h3>
                       <button onClick={() => doRetailExport(active)} style={S.bp}>Download Retail Lending Analytics.xlsx</button>
                     </div>
 
@@ -920,10 +919,7 @@ export default function App() {
                     {reports.length >= 2 && (
                       <div style={{ ...S.card, textAlign: "center", padding: 28, marginTop: 16 }}>
                         <div style={{ fontSize: 32, marginBottom: 10 }}>{"\u{1F3DB}"}</div>
-                        <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>Wholesale Lending Analytics</h3>
-                        <p style={{ color: "#64748b", fontSize: 12.5, marginBottom: 8, lineHeight: 1.6 }}>
-                          Formatted to match the CRM-CD Corporate Template — 12 sheets; applying concern auto-detected from filename pattern.
-                        </p>
+                        <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 14 }}>Wholesale Lending Analytics</h3>
                         {wholesaleError && (
                           <div style={{ background: "#fef3c7", border: "1px solid #f59e0b", borderRadius: 6, padding: "8px 12px", marginBottom: 12, fontSize: 12, color: "#92400e", textAlign: "left" }}>
                             {wholesaleError}
@@ -934,9 +930,6 @@ export default function App() {
                           <button onClick={handleCommitteeSummaryExport} style={{ ...S.bp, background: "#0f766e" }}>
                             Download Summary for Credit Committee.docx
                           </button>
-                          <p style={{ color: "#94a3b8", fontSize: 11, marginTop: 6, lineHeight: 1.5 }}>
-                            One-page Word summary: applying-concern + group liability tables.
-                          </p>
                         </div>
                       </div>
                     )}
