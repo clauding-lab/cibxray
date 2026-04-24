@@ -1,0 +1,970 @@
+{
+  "CIB Dashboard": [
+    [
+      "CIB Dashboard",
+      "(Amount in BDT Million)"
+    ],
+    [],
+    [
+      "KYC"
+    ],
+    [
+      "Ref. Number",
+      "CIB-042"
+    ],
+    [
+      "Name of Main Borrower",
+      "Md. Test Borrower"
+    ],
+    [
+      "Name of main representative",
+      ""
+    ],
+    [
+      "NID No.",
+      "1234567890"
+    ],
+    [
+      "DOB",
+      "01/01/1980"
+    ],
+    [
+      "TIN No.",
+      "9876543210"
+    ],
+    [
+      "Father's Name",
+      "Father Name"
+    ],
+    [
+      "Mother's Name",
+      "Mother Name"
+    ],
+    [],
+    [
+      "Individual Liability Status"
+    ],
+    [
+      "Particular",
+      "# Live Contracts",
+      "Sanctioned Limit",
+      "Outstanding",
+      "Overdue",
+      "SMA",
+      "SS/DF/BL/BLW",
+      "Previous Overdue Amount (Date)",
+      "Previous Classification"
+    ],
+    [
+      "Funded — Long term",
+      3,
+      14.5,
+      8.85,
+      0,
+      0,
+      0,
+      "",
+      "STD"
+    ],
+    [
+      "Funded — Short term",
+      1,
+      2,
+      1.5,
+      0.3,
+      1.5,
+      0,
+      "0.3 (01/02/2026)",
+      "SMA"
+    ],
+    [
+      "Total Funded",
+      4,
+      16.5,
+      10.35,
+      0.3,
+      1.5,
+      0,
+      "0.3 (01/02/2026)",
+      "SMA"
+    ],
+    [
+      "Non-Funded",
+      1,
+      6,
+      2,
+      0,
+      0,
+      0,
+      "",
+      "STD"
+    ],
+    [
+      "Total",
+      5,
+      22.5,
+      12.35,
+      0.3,
+      1.5,
+      0,
+      "0.3 (01/02/2026)",
+      "SMA"
+    ],
+    [
+      "Group Liability Status"
+    ],
+    [
+      "Particular",
+      "# Live Contracts",
+      "Sanctioned Limit",
+      "Outstanding",
+      "Overdue",
+      "SMA",
+      "SS/DF/BL/BLW",
+      "Previous Overdue Amount (Date)",
+      "Previous Classification"
+    ],
+    [
+      "Funded — Long term",
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      "",
+      "STD"
+    ],
+    [
+      "Funded — Short term",
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      "",
+      "STD"
+    ],
+    [
+      "Total Funded",
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      "",
+      "STD"
+    ],
+    [
+      "Non-Funded",
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      "",
+      "STD"
+    ],
+    [
+      "Total",
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      "",
+      "STD"
+    ],
+    [
+      "PG Role Status"
+    ],
+    [
+      "No. of Guaranteed Installment Loan",
+      1
+    ],
+    [
+      "No. of Guaranteed Non-Installment Loan",
+      0
+    ],
+    [
+      "Terminated Contracts Status"
+    ],
+    [
+      "No. of Terminated Installment Loans",
+      1
+    ],
+    [
+      "No. of Terminated Non-Installment Loans",
+      1
+    ],
+    [
+      "Sum of EMI of Terminated Installment Loans",
+      0.03
+    ],
+    [],
+    [
+      "Findings"
+    ],
+    [
+      "Particular",
+      "Finding"
+    ],
+    [
+      "Date",
+      "20-Mar-2026 11:23:45 AM"
+    ],
+    [
+      "Age of CIB Report (Days)",
+      "<age-days>"
+    ],
+    [
+      "Partners Name / Directors Name",
+      "Director One, Director Two"
+    ],
+    [
+      "Name of Sister Concern",
+      "Alpha Traders, Beta Enterprise"
+    ],
+    [
+      "Overall current CIB Status (borrower & guarantor)",
+      "SMA"
+    ],
+    [
+      "SS/DF/BL/BLW as Borrower/Co-borrower (any point)",
+      "SMA"
+    ],
+    [
+      "Amount of current Overdue in Borrower/Co-borrower role",
+      0.3
+    ],
+    [
+      "Forced Loan (end − start ≤ 5 days)",
+      "No"
+    ],
+    [
+      "Any Stay Order",
+      "N/A"
+    ],
+    [
+      "SS/DF/BL/BLW under PG Role (any point)",
+      "STD"
+    ],
+    [
+      "Amount of current Overdue in PG role",
+      0
+    ],
+    [
+      "Amount of Guaranteed Installment Loan",
+      2.5
+    ],
+    [
+      "Amount of Guaranteed Non-Installment Loan",
+      0
+    ],
+    [
+      "No. of Terminated Installment Loans",
+      1
+    ],
+    [
+      "Amount of Terminated Installment Loans",
+      0
+    ],
+    [
+      "Amount of Terminated Non-Installment Loans",
+      0
+    ],
+    [
+      "Existing Loans' EMI",
+      0.28
+    ],
+    [
+      "Any Reschedule",
+      "Yes"
+    ],
+    [
+      "Highest Term loan exposure at the same time",
+      10.2
+    ],
+    [
+      "Highest Non-installment exposure at the same time",
+      4.85
+    ],
+    [
+      "Cumulative highest exposure",
+      10.2
+    ],
+    [
+      "Cumulative highest EMI",
+      0.18
+    ],
+    [
+      "No. of New Installment Facilities in last 24 months",
+      1
+    ],
+    [
+      "Amount of New Installment Facilities in last 24 months",
+      2
+    ],
+    [
+      "No. of New Non-Installment Facilities in last 24 months",
+      1
+    ],
+    [
+      "Amount of New Non-Installment Facilities in last 24 months",
+      5
+    ],
+    [
+      "Incremental burden in last 12 months",
+      15.35
+    ],
+    [
+      "Incremental burden in last 24 months",
+      15.35
+    ],
+    [
+      "Any loan with sudden Multiple Overdue",
+      "Yes"
+    ]
+  ],
+  "Linked Concerns & Institute": [
+    [
+      "(Amount in BDT Million)"
+    ],
+    [
+      "Sl",
+      "Concern Name",
+      "CIB Subject Code",
+      "Designation",
+      "Share (%)",
+      "Status",
+      "Total Limit",
+      "Total Outstanding",
+      "Total Overdue",
+      "No. of Live Contracts",
+      "No. of Terminated Contracts",
+      "Worst Status",
+      "Highest NPI",
+      "Ref No. for Highest NPI",
+      "Page No. of Highest NPI",
+      "Remarks",
+      "Col 17",
+      "Col 18",
+      "Col 19",
+      "Col 20",
+      "Col 21",
+      "Col 22"
+    ],
+    [
+      1,
+      "Alpha Traders",
+      "P001",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    [
+      2,
+      "Beta Enterprise",
+      "P002",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ]
+  ],
+  "Term Loans": [
+    [
+      "(Amount in BDT Million)"
+    ],
+    [
+      "Live Contracts",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    [
+      "Borrower",
+      "CIB Ref No.",
+      "Page No.",
+      "Role of main applicant",
+      "CIB Code",
+      "Security Type",
+      "Starting Date",
+      "End of Contract",
+      "Limit",
+      "Outstanding",
+      "EMI",
+      "Term",
+      "Due",
+      "Paid",
+      "Remaining term",
+      "CIB Status",
+      "Status",
+      "NPI",
+      "Overdue amount",
+      "Highest Overdue",
+      "Highest NPI",
+      "Classification History",
+      "Worst Status"
+    ],
+    [
+      "Md. Test Borrower",
+      "TL-LT-001",
+      7,
+      "Borrower",
+      "TL-LT-001",
+      "60 ( Financial )",
+      "01/01/2022",
+      "01/01/2027",
+      10,
+      6,
+      0.1,
+      60,
+      "",
+      24,
+      36,
+      "STD",
+      "Live",
+      0,
+      0,
+      0,
+      0,
+      "STD",
+      "STD"
+    ],
+    [
+      "Md. Test Borrower",
+      "TL-ST-002",
+      10,
+      "Borrower",
+      "TL-ST-002",
+      "80 ( Without any )",
+      "01/06/2025",
+      "01/06/2026",
+      2,
+      1.5,
+      0.18,
+      12,
+      "",
+      6,
+      6,
+      "SMA",
+      "Live",
+      1,
+      0.3,
+      0.3,
+      1,
+      "STD → SMA",
+      "SMA"
+    ],
+    [
+      "Md. Test Borrower",
+      "TL-GUAR-003",
+      15,
+      "Guarantor",
+      "TL-GUAR-003",
+      "",
+      "01/06/2023",
+      "01/06/2026",
+      5,
+      3,
+      0.05,
+      36,
+      "",
+      16,
+      20,
+      "STD",
+      "Live",
+      0,
+      0,
+      0,
+      0,
+      "STD",
+      "STD"
+    ],
+    [
+      "Terminated Contracts",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    [
+      "Borrower",
+      "CIB Ref No.",
+      "Page No.",
+      "Role of main applicant",
+      "CIB Code",
+      "Security Type",
+      "Starting Date",
+      "End of Contract",
+      "Limit",
+      "Outstanding",
+      "EMI",
+      "Term",
+      "Due",
+      "Paid",
+      "Remaining term",
+      "CIB Status",
+      "Status",
+      "NPI",
+      "Overdue amount",
+      "Highest Overdue",
+      "Highest NPI",
+      "Classification History",
+      "Worst Status"
+    ],
+    [
+      "Md. Test Borrower",
+      "TL-TERM-004",
+      18,
+      "Borrower",
+      "TL-TERM-004",
+      "",
+      "01/01/2020",
+      "01/01/2023",
+      1,
+      0,
+      0.03,
+      36,
+      "",
+      36,
+      0,
+      "STD",
+      "Terminated",
+      0,
+      0,
+      0,
+      0,
+      "",
+      "STD"
+    ]
+  ],
+  "Non-Installment Loan": [
+    [
+      "(Amount in BDT Million)"
+    ],
+    [
+      "Live Contracts",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    [
+      "Borrower",
+      "CIB Ref No.",
+      "Page No.",
+      "Role of main applicant",
+      "CIB Code",
+      "Security Type",
+      "Starting Date",
+      "End of Contract",
+      "Limit",
+      "Outstanding",
+      "Utilization (%)",
+      "Avg. Utilization 12M (%)",
+      "Highest Utilization 12M (%)",
+      "Overlimit History",
+      "CIB Status",
+      "Status",
+      "NPI",
+      "Overdue amount",
+      "Worst Status"
+    ],
+    [
+      "Md. Test Borrower",
+      "LC-005",
+      22,
+      "Borrower",
+      "LC-005",
+      "",
+      "01/01/2025",
+      "01/01/2026",
+      5,
+      2,
+      40,
+      40,
+      40,
+      0,
+      "STD",
+      "Live",
+      0,
+      0,
+      "STD"
+    ],
+    [
+      "Md. Test Borrower",
+      "OD-006",
+      26,
+      "Borrower",
+      "OD-006",
+      "",
+      "01/01/2024",
+      "01/01/2027",
+      3,
+      2.5,
+      83.33,
+      83.33,
+      83.33,
+      0,
+      "STD",
+      "Live",
+      0,
+      0,
+      "STD"
+    ],
+    [
+      "Terminated Contracts",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    [
+      "Borrower",
+      "CIB Ref No.",
+      "Page No.",
+      "Role of main applicant",
+      "CIB Code",
+      "Security Type",
+      "Starting Date",
+      "End of Contract",
+      "Limit",
+      "Outstanding",
+      "Utilization (%)",
+      "Avg. Utilization 12M (%)",
+      "Highest Utilization 12M (%)",
+      "Overlimit History",
+      "CIB Status",
+      "Status",
+      "NPI",
+      "Overdue amount",
+      "Worst Status"
+    ],
+    [
+      "Md. Test Borrower",
+      "GUAR-008",
+      34,
+      "Borrower",
+      "GUAR-008",
+      "",
+      "01/01/2022",
+      "01/01/2024",
+      1,
+      0,
+      0,
+      "",
+      "",
+      0,
+      "STD",
+      "Terminated",
+      0,
+      0,
+      "STD"
+    ]
+  ],
+  "Credit Cards": [
+    [
+      "(Amount in BDT Million)"
+    ],
+    [
+      "Live Contracts",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    [
+      "Borrower",
+      "CIB Ref No.",
+      "Page No.",
+      "Role",
+      "CIB Code",
+      "Starting Date",
+      "Limit",
+      "Outstanding",
+      "Utilization (%)",
+      "Avg. Utilization 12M (%)",
+      "Highest Utilization 12M (%)",
+      "Overlimit History",
+      "CIB Status",
+      "Status",
+      "NPI",
+      "Overdue amount",
+      "Highest Overdue"
+    ],
+    [
+      "Md. Test Borrower",
+      "CC-007",
+      30,
+      "Borrower",
+      "CC-007",
+      "01/01/2024",
+      0.5,
+      0.35,
+      70,
+      65,
+      70,
+      0,
+      "STD",
+      "Live",
+      0,
+      0,
+      0
+    ],
+    [
+      "Terminated Contracts",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    [
+      "Borrower",
+      "CIB Ref No.",
+      "Page No.",
+      "Role",
+      "CIB Code",
+      "Starting Date",
+      "Limit",
+      "Outstanding",
+      "Utilization (%)",
+      "Avg. Utilization 12M (%)",
+      "Highest Utilization 12M (%)",
+      "Overlimit History",
+      "CIB Status",
+      "Status",
+      "NPI",
+      "Overdue amount",
+      "Highest Overdue"
+    ]
+  ],
+  "Details of non-funded": [
+    [
+      "(Amount in BDT Million)"
+    ],
+    [
+      "Type of financing",
+      "No. of live contract",
+      "Amount of live contract",
+      "Status",
+      "No. of expired contract"
+    ],
+    [
+      "Letter of credit",
+      1,
+      2,
+      "Live",
+      0
+    ],
+    [
+      "Guarantee",
+      0,
+      0,
+      "Expired",
+      1
+    ]
+  ],
+  "Overdue Loans": [
+    [
+      "(Amount in BDT Million)"
+    ],
+    [
+      "Borrower Name",
+      "Ref. No.",
+      "Page No.",
+      "Sanclimit",
+      "Outstanding",
+      "Overdue",
+      "NPI",
+      "Highest NPI",
+      "Status"
+    ],
+    [
+      "Md. Test Borrower",
+      "TL-ST-002",
+      10,
+      2,
+      1.5,
+      0.3,
+      1,
+      1,
+      "SMA"
+    ]
+  ],
+  "Loan with unchanged Outstanding": [
+    [
+      "(Amount in BDT Million)"
+    ],
+    [
+      "Borrower Name",
+      "Ref. No.",
+      "Page No.",
+      "Sanclimit",
+      "Outstanding",
+      "Overdue",
+      "NPI",
+      "Status"
+    ],
+    [
+      "Md. Test Borrower",
+      "OD-006",
+      26,
+      3,
+      2.5,
+      0,
+      0,
+      "STD"
+    ]
+  ],
+  "Loan with Sudden Multiple OD": [
+    [
+      "(Amount in BDT Million)"
+    ],
+    [
+      "Borrower Name",
+      "Ref. No.",
+      "Page No.",
+      "Sanclimit",
+      "Outstanding",
+      "Overdue",
+      "NPI",
+      "Status"
+    ],
+    [
+      "Md. Test Borrower",
+      "TL-ST-002",
+      10,
+      2,
+      1.5,
+      0.3,
+      1,
+      "SMA"
+    ]
+  ]
+}
