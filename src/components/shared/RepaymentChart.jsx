@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { CLS } from '../../constants/classifications';
 import { fmt } from '../../utils/format';
 import { S } from '../../constants/theme';
@@ -9,6 +9,21 @@ const statusDotColor = (cls) => (CLS[cls] || CLS.STD).color;
 export default function RepaymentChart({ facs, title }) {
   const [hover, setHover] = useState(null);
   const [selectedFac, setSelectedFac] = useState("all");
+  // ResizeObserver-backed dynamic width — the viewBox matches the rendered
+  // pixel width 1:1, so text/lines never get stretched or pixelated.
+  const wrapperRef = useRef(null);
+  const [wrapperW, setWrapperW] = useState(780);
+  useEffect(() => {
+    if (!wrapperRef.current || typeof ResizeObserver === 'undefined') return;
+    const obs = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const w = Math.max(480, Math.floor(entry.contentRect.width));
+        setWrapperW(w);
+      }
+    });
+    obs.observe(wrapperRef.current);
+    return () => obs.disconnect();
+  }, []);
 
   const facsWithHistory = facs.filter(f => f.history && f.history.length > 1);
   if (facsWithHistory.length === 0) return null;
@@ -69,7 +84,7 @@ export default function RepaymentChart({ facs, title }) {
 
   if (chartData.length < 2) return null;
 
-  const W = 780, H = 280, padL = 70, padR = 20, padT = 20, padB = 50;
+  const W = wrapperW, H = 280, padL = 70, padR = 20, padT = 20, padB = 50;
   const cW = W - padL - padR, cH = H - padT - padB;
   const maxOut = Math.max(...chartData.map(d => d.outstanding), 1);
   const maxOver = Math.max(...chartData.map(d => d.overdue), 0);
@@ -114,8 +129,8 @@ export default function RepaymentChart({ facs, title }) {
         <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: 4, background: "#d97706", display: "inline-block" }} /> Classification status (dot color)</span>
       </div>
 
-      <div style={{ position: "relative", width: "100%" }}>
-        <svg width="100%" height={H} viewBox={"0 0 " + W + " " + H} preserveAspectRatio="none" style={{ display: "block", overflow: "visible" }}
+      <div ref={wrapperRef} style={{ position: "relative", width: "100%" }}>
+        <svg width={W} height={H} viewBox={"0 0 " + W + " " + H} preserveAspectRatio="xMidYMid meet" style={{ display: "block", overflow: "visible" }}
           onMouseLeave={() => setHover(null)}>
           {yTicks.map((t, i) => (
             <g key={i}>
