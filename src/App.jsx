@@ -100,7 +100,12 @@ export default function App() {
     if (isMobile) setSideOpen(false);
   };
 
-  const handlePrint = (report, score, band) => {
+  // Writes the print payload to localStorage and returns true on success,
+  // false if the payload was too big to store. Throws on unexpected errors.
+  // Does NOT open a window — the anchor tag handles navigation natively
+  // via target="_blank", which is not subject to popup-blocker restrictions
+  // the way programmatic window.open() is.
+  const writePrintPayload = (report, score, band) => {
     // localStorage (not sessionStorage) so the handoff survives the
     // new-tab boundary — sessionStorage is NOT inherited when the new
     // window is opened via window.open(). writtenAt lets PrintReport
@@ -109,12 +114,6 @@ export default function App() {
     // rawText is stripped before serialization so several KB of raw
     // PDF text per facility never hit localStorage. try/finally + the
     // popup-blocker guard ensure we scrub the key on any failure path.
-    // Explicit error feedback for every failure path. Previously, thrown
-    // errors in an onClick get logged to console but the user sees nothing.
-    // This handler now alerts the user with a specific message for:
-    //   - quota exceeded (payload too big)
-    //   - popup blocked (window.open returned null)
-    //   - any other thrown error (serialization, storage access, etc.)
     const sanitized = stripForPrint(report);
     const isMulti = Array.isArray(reports) && reports.length > 1;
 
@@ -136,41 +135,13 @@ export default function App() {
       }
     };
 
-    try {
-      let ok = trySet(buildPayload(true));
-      if (!ok && isMulti) {
-        // Fallback 1: drop the group-table payload. Applying Concern table
-        // still renders for the active report.
-        ok = trySet(buildPayload(false));
-      }
-      if (!ok) {
-        clearPrintPayload(localStorage);
-        // eslint-disable-next-line no-alert -- surface quota failure to the user
-        alert(
-          'Report is too large to print in this browser. ' +
-          (isMulti
-            ? 'Try printing individual reports one at a time (reduce the batch size), or use a different browser.'
-            : 'Try printing from a different browser.')
-        );
-        return;
-      }
-      const win = window.open('/#print', '_blank');
-      if (!win) {
-        // Popup blocker — window.open returned null without throwing.
-        // The payload is already in localStorage; scrub it since the
-        // new tab will never read it.
-        clearPrintPayload(localStorage);
-        // eslint-disable-next-line no-alert
-        alert('Browser blocked the print window. Allow popups for this site and try again.');
-        return;
-      }
-    } catch (err) {
-      clearPrintPayload(localStorage);
-      // eslint-disable-next-line no-console
-      console.error('Print handler error:', err);
-      // eslint-disable-next-line no-alert
-      alert('Could not open print. ' + (err && err.message ? err.message : 'Unknown error') + ' — check the browser console for details.');
+    let ok = trySet(buildPayload(true));
+    if (!ok && isMulti) {
+      // Fallback: drop the group-table payload. Applying Concern table
+      // still renders for the active report.
+      ok = trySet(buildPayload(false));
     }
+    return ok;
   };
 
   const TABS = [
@@ -526,25 +497,63 @@ export default function App() {
                       {active.fileName} | {active.subject.subjectType} | CIB: {active.subject.cibSubjectCode}
                     </p>
                   </div>
-                  {active?.stamp && (
-                    <button
-                      type="button"
-                      onClick={() => handlePrint(active, scActive, b)}
-                      disabled={active?.parseQuality?.tier === 'major'}
-                      title={active?.parseQuality?.tier === 'major'
-                        ? 'Score hidden due to parse mismatch. Print not available.'
-                        : 'Open printable 1-page summary'}
-                      style={{
-                        ...S.bo,
-                        whiteSpace: "nowrap",
-                        flexShrink: 0,
-                        opacity: active?.parseQuality?.tier === 'major' ? 0.5 : 1,
-                        cursor: active?.parseQuality?.tier === 'major' ? 'not-allowed' : 'pointer',
-                      }}
-                    >
-                      Print report
-                    </button>
-                  )}
+                  {active?.stamp && (() => {
+                    const disabled = active?.parseQuality?.tier === 'major';
+                    const onClick = (e) => {
+                      if (disabled) {
+                        e.preventDefault();
+                        return;
+                      }
+                      try {
+                        const ok = writePrintPayload(active, scActive, b);
+                        if (!ok) {
+                          e.preventDefault();
+                          clearPrintPayload(localStorage);
+                          const isMulti = reports.length > 1;
+                          // eslint-disable-next-line no-alert
+                          alert(
+                            'Report is too large to print in this browser. ' +
+                            (isMulti
+                              ? 'Try printing individual reports one at a time (reduce the batch size), or use a different browser.'
+                              : 'Try printing from a different browser.')
+                          );
+                        }
+                      } catch (err) {
+                        e.preventDefault();
+                        clearPrintPayload(localStorage);
+                        // eslint-disable-next-line no-console
+                        console.error('Print handler error:', err);
+                        // eslint-disable-next-line no-alert
+                        alert('Could not open print. ' + (err && err.message ? err.message : 'Unknown error') + ' — check the browser console for details.');
+                      }
+                    };
+                    return (
+                      <a
+                        href="/#print"
+                        target="_blank"
+                        rel="noopener"
+                        role="button"
+                        aria-disabled={disabled}
+                        onClick={onClick}
+                        title={disabled
+                          ? 'Score hidden due to parse mismatch. Print not available.'
+                          : 'Open printable 1-page summary'}
+                        style={{
+                          ...S.bo,
+                          whiteSpace: "nowrap",
+                          flexShrink: 0,
+                          textDecoration: "none",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          opacity: disabled ? 0.5 : 1,
+                          cursor: disabled ? 'not-allowed' : 'pointer',
+                          pointerEvents: disabled ? 'none' : 'auto',
+                        }}
+                      >
+                        Print report
+                      </a>
+                    );
+                  })()}
                 </div>
 
                 {/* Tab bar — full width, own horizontal scroll */}
