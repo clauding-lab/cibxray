@@ -486,37 +486,13 @@ export default function App() {
 
             return (
               <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                  <div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 10 }}>
+                  <div style={{ minWidth: 0 }}>
                     <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>{active.reportNo}: {active.subject.displayName}</h2>
                     <p style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>
                       {active.subject.subjectType === "INDIVIDUAL" && active.subject.proprietor ? ("Prop: " + active.subject.proprietor + " | ") : ""}
                       {active.fileName} | {active.subject.subjectType} | CIB: {active.subject.cibSubjectCode}
                     </p>
-                  </div>
-                </div>
-
-                {/* Tab bar + report-level actions */}
-                <div style={{ display: "flex", alignItems: "flex-end", gap: 12, borderBottom: "1px solid #e2e8f0", marginBottom: 16, minHeight: 38 }}>
-                  <div style={{ display: "flex", gap: 1, overflowX: "auto", overflowY: "hidden", flex: 1 }}>
-                    {TABS.map(t => {
-                      const count = t.key === "borrower" ? borrowerFacs.length : t.key === "guarantor" ? guarantorFacs.length : t.key === "linked" ? active.relatedConcerns.length : t.key === "redflags" ? redFlagCount : null;
-                      const isRedFlag = t.key === "redflags" && redFlagCount > 0;
-                      return (
-                        <button key={t.key} onClick={() => setTab(t.key)} style={{
-                          ...tabStyle(tab === t.key),
-                          color: isRedFlag && tab !== t.key ? "#dc2626" : tabStyle(tab === t.key).color,
-                        }}>
-                          {t.label}
-                          {count !== null && count > 0 && (
-                            t.key === "redflags"
-                              ? <span style={{ marginLeft: 5, background: "#dc2626", color: "#fff", fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 8, verticalAlign: "middle" }}>{count}</span>
-                              : <span style={{ marginLeft: 3, color: "#94a3b8" }}> ({count})</span>
-                          )}
-                          {t.key === "redflags" && count === 0 && <span style={{ marginLeft: 3, color: "#94a3b8" }}> (0)</span>}
-                        </button>
-                      );
-                    })}
                   </div>
                   {active?.stamp && (
                     <button
@@ -528,8 +504,8 @@ export default function App() {
                         : 'Open printable 1-page summary'}
                       style={{
                         ...S.bo,
-                        marginBottom: 6,
                         whiteSpace: "nowrap",
+                        flexShrink: 0,
                         opacity: active?.parseQuality?.tier === 'major' ? 0.5 : 1,
                         cursor: active?.parseQuality?.tier === 'major' ? 'not-allowed' : 'pointer',
                       }}
@@ -537,6 +513,28 @@ export default function App() {
                       Print report
                     </button>
                   )}
+                </div>
+
+                {/* Tab bar — full width, own horizontal scroll */}
+                <div style={{ display: "flex", gap: 1, overflowX: "auto", overflowY: "hidden", borderBottom: "1px solid #e2e8f0", marginBottom: 16, minHeight: 38 }}>
+                  {TABS.map(t => {
+                    const count = t.key === "borrower" ? borrowerFacs.length : t.key === "guarantor" ? guarantorFacs.length : t.key === "linked" ? active.relatedConcerns.length : t.key === "redflags" ? redFlagCount : null;
+                    const isRedFlag = t.key === "redflags" && redFlagCount > 0;
+                    return (
+                      <button key={t.key} onClick={() => setTab(t.key)} style={{
+                        ...tabStyle(tab === t.key),
+                        color: isRedFlag && tab !== t.key ? "#dc2626" : tabStyle(tab === t.key).color,
+                      }}>
+                        {t.label}
+                        {count !== null && count > 0 && (
+                          t.key === "redflags"
+                            ? <span style={{ marginLeft: 5, background: "#dc2626", color: "#fff", fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 8, verticalAlign: "middle" }}>{count}</span>
+                            : <span style={{ marginLeft: 3, color: "#94a3b8" }}> ({count})</span>
+                        )}
+                        {t.key === "redflags" && count === 0 && <span style={{ marginLeft: 3, color: "#94a3b8" }}> (0)</span>}
+                      </button>
+                    );
+                  })}
                 </div>
 
                 {/* SUMMARY TAB */}
