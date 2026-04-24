@@ -109,11 +109,12 @@ export default function App() {
     // rawText is stripped before serialization so several KB of raw
     // PDF text per facility never hit localStorage. try/finally + the
     // popup-blocker guard ensure we scrub the key on any failure path.
-    // 3-tier quota fallback. localStorage caps at ~5MB/origin; a large
-    // wholesale batch (50+ reports) can exceed this even after stripping.
-    // Try the richest payload first; on QuotaExceededError, drop the
-    // group-table payload (single-report print still works); as last
-    // resort, surface a clear alert.
+    // Explicit error feedback for every failure path. Previously, thrown
+    // errors in an onClick get logged to console but the user sees nothing.
+    // This handler now alerts the user with a specific message for:
+    //   - quota exceeded (payload too big)
+    //   - popup blocked (window.open returned null)
+    //   - any other thrown error (serialization, storage access, etc.)
     const sanitized = stripForPrint(report);
     const isMulti = Array.isArray(reports) && reports.length > 1;
 
@@ -155,11 +156,20 @@ export default function App() {
       }
       const win = window.open('/#print', '_blank');
       if (!win) {
+        // Popup blocker — window.open returned null without throwing.
+        // The payload is already in localStorage; scrub it since the
+        // new tab will never read it.
         clearPrintPayload(localStorage);
+        // eslint-disable-next-line no-alert
+        alert('Browser blocked the print window. Allow popups for this site and try again.');
+        return;
       }
     } catch (err) {
       clearPrintPayload(localStorage);
-      throw err;
+      // eslint-disable-next-line no-console
+      console.error('Print handler error:', err);
+      // eslint-disable-next-line no-alert
+      alert('Could not open print. ' + (err && err.message ? err.message : 'Unknown error') + ' — check the browser console for details.');
     }
   };
 
