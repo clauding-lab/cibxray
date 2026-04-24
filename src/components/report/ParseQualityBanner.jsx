@@ -1,8 +1,9 @@
+import { fmt } from '../../utils/format';
+
 export default function ParseQualityBanner({ pq }) {
   if (!pq || pq.tier === 'ok') return null;
-  const fmtN = (n) => new Intl.NumberFormat('en-IN').format(n);
   const describe = (issue) =>
-    `${issue.field === 'outstanding' ? 'Outstanding' : 'Overdue'}: summary says BDT ${fmtN(issue.summaryValue)}, facilities total BDT ${fmtN(issue.computedValue)} (gap BDT ${fmtN(issue.gap)}).`;
+    `${issue.field === 'outstanding' ? 'Outstanding' : 'Overdue'}: summary says BDT ${fmt(issue.summaryValue)}, facilities total BDT ${fmt(issue.computedValue)} (gap BDT ${fmt(issue.gap)}).`;
 
   if (pq.tier === 'unavailable') {
     return (

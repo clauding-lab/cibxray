@@ -42,8 +42,8 @@ function DelinquencyTimeline({ timeline }) {
           const cls = CLS[row.status] || CLS.STD;
           const hasOverdue = (row.overdue || 0) > 0 || (row.npi || 0) >= 1;
           const title = `${row.dateStr} · ${cls.label}` +
-            (row.outstanding != null ? ` · Out ${row.outstanding.toLocaleString('en-IN')}` : '') +
-            (hasOverdue ? ` · Overdue ${row.overdue.toLocaleString('en-IN')} (NPI ${row.npi})` : '') +
+            (row.outstanding != null ? ` · Out BDT ${fmt(row.outstanding)}` : '') +
+            (hasOverdue ? ` · Overdue BDT ${fmt(row.overdue)} (NPI ${row.npi})` : '') +
             (row.utilization != null ? ` · Util ${row.utilization.toFixed(1)}%` : '');
           return (
             <div key={i} title={title} style={{ flex: '1 0 70px', minWidth: 70 }}>
