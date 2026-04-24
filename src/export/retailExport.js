@@ -41,9 +41,11 @@ const AMOUNT_CAPTION = '(Amount in BDT Million)';
  * Build the full retail workbook as a plain object. Pure — no IO.
  * Key structure is stable for snapshot tests.
  * @param {object} report
+ * @param {{ asOf?: Date }} [options] — date of record; defaults to now. Passed
+ *   to sheet builders that use it (Sheet 3 Due EMI, etc).
  * @returns {object}
  */
-export function buildRetailWorkbookData(report) {
+export function buildRetailWorkbookData(report, { asOf = new Date() } = {}) {
   // ── Sheet 1 assembly: stack the five sub-blocks vertically ──
   const sheet1 = [];
   sheet1.push(['CIB Dashboard', AMOUNT_CAPTION]);
@@ -67,7 +69,7 @@ export function buildRetailWorkbookData(report) {
   return {
     'CIB Dashboard': sheet1,
     'Linked Concerns & Institute': withCaption(buildLinkedConcernsRows(report)),
-    'Term Loans': withCaption(buildTermLoansRows(report)),
+    'Term Loans': withCaption(buildTermLoansRows(report, { asOf })),
     'Non-Installment Loan': withCaption(buildNonInstallmentRows(report)),
     'Credit Cards': withCaption(buildCreditCardsRows(report)),
     'Details of non-funded': withCaption(buildNonFundedDetailsRows(report)),

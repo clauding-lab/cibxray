@@ -39,6 +39,46 @@ export function monthsDiff(start, end) {
   return years * 12 + months;
 }
 
+// ── computeDueEmi ─────────────────────────────────────────────────────────────
+
+const PERIODICITY_MONTHS = {
+  Monthly: 1,
+  Bimonthly: 2,
+  Quarterly: 3,
+  'Half-Yearly': 6,
+};
+
+/**
+ * Compute the number of EMIs (installments) that should have been paid by
+ * `asOf` per the facility's repayment schedule.
+ *
+ *   elapsed = monthsDiff(startDate, asOf)
+ *   due     = min(floor(elapsed / periodicityMonths), totalInstallments)
+ *
+ * This is a pure calendar measure — independent of what was actually paid.
+ * On a well-behaved loan, Due EMI === Paid. On a delinquent loan, Due > Paid,
+ * and (Due − Paid) approximates NPI. Cap at totalInstallments so terminated /
+ * fully-matured loans don't overshoot.
+ *
+ * Returns empty string when startDate or paymentPeriodicity is missing or
+ * unparseable (keeps the Excel cell visibly blank rather than a wrong number).
+ *
+ * @param {{ startDate: string, paymentPeriodicity: string, totalInstallments: number|null }} facility
+ * @param {Date} asOf
+ * @returns {number|''}
+ */
+export function computeDueEmi(facility, asOf) {
+  const start = parseCibDate(facility.startDate);
+  if (!start) return '';
+  const periodMonths = PERIODICITY_MONTHS[facility.paymentPeriodicity];
+  if (!periodMonths) return '';
+  const elapsed = monthsDiff(start, asOf);
+  if (elapsed < 0) return 0;
+  const due = Math.floor(elapsed / periodMonths);
+  const cap = facility.totalInstallments != null ? facility.totalInstallments : Infinity;
+  return Math.min(due, cap);
+}
+
 // ── classifyTenure ────────────────────────────────────────────────────────────
 
 /**

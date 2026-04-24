@@ -18,7 +18,7 @@
 //  9 Outstanding (M)
 // 10 EMI (M)
 // 11 Term (totalInstallments)
-// 12 Due (unclear — judgment call: render empty)
+// 12 Due EMI (schedule-based: monthsSinceStart / periodicityMonths, capped at Term)
 // 13 Paid (totalInstallments - remainingInstallmentsCount)
 // 14 Remaining term (remainingInstallmentsCount)
 // 15 CIB Status (current classification)
@@ -30,13 +30,13 @@
 // 21 Classification History
 // 22 Worst Status
 
-import { computeHistoryRollup, classifyFundedNature } from '../../analytics/devreq2Analytics.js';
+import { computeHistoryRollup, classifyFundedNature, computeDueEmi } from '../../analytics/devreq2Analytics.js';
 import { toMillions } from './helpers.js';
 
 const HEADERS = [
   'Borrower', 'CIB Ref No.', 'Page No.', 'Role of main applicant', 'CIB Code',
   'Security Type', 'Starting Date', 'End of Contract', 'Limit', 'Outstanding',
-  'EMI', 'Term', 'Due', 'Paid', 'Remaining term', 'CIB Status', 'Status', 'NPI',
+  'EMI', 'Term', 'Due EMI', 'Paid', 'Remaining term', 'CIB Status', 'Status', 'NPI',
   'Overdue amount', 'Highest Overdue', 'Highest NPI', 'Classification History',
   'Worst Status',
 ];
@@ -59,7 +59,7 @@ function isTermLoanFacility(f) {
   return INSTALLMENT_TYPE_PATTERNS.test(type);
 }
 
-function facilityToRow(f, borrowerName) {
+function facilityToRow(f, borrowerName, asOf) {
   const rollup = computeHistoryRollup(f);
   const paid = (f.totalInstallments != null && f.remainingInstallmentsCount != null)
     ? f.totalInstallments - f.remainingInstallmentsCount
@@ -81,7 +81,7 @@ function facilityToRow(f, borrowerName) {
     toMillions(f.outstanding),
     toMillions(f.installmentAmount),
     f.totalInstallments != null ? f.totalInstallments : '',
-    '', // Due — judgment call (spec §4 Sheet 3 "Due" derivation unclear; flag Phase 3.1)
+    computeDueEmi(f, asOf),
     paid,
     f.remainingInstallmentsCount != null ? f.remainingInstallmentsCount : '',
     f.classification || 'STD',
@@ -99,9 +99,10 @@ function facilityToRow(f, borrowerName) {
  * Build Sheet 3 rows. Emits Live section header + data + Terminated section
  * header + data.
  * @param {{ facilities: Array, subject: object }} report
+ * @param {{ asOf?: Date }} [options]
  * @returns {Array<Array>}
  */
-export function buildTermLoansRows(report) {
+export function buildTermLoansRows(report, { asOf = new Date() } = {}) {
   const facilities = (report.facilities || []).filter(isTermLoanFacility);
   const borrowerName = (report.subject && report.subject.displayName) || '';
 
@@ -117,9 +118,9 @@ export function buildTermLoansRows(report) {
   return [
     sectionLabel('Live Contracts'),
     HEADERS,
-    ...live.map(f => facilityToRow(f, borrowerName)),
+    ...live.map(f => facilityToRow(f, borrowerName, asOf)),
     sectionLabel('Terminated Contracts'),
     HEADERS,
-    ...terminated.map(f => facilityToRow(f, borrowerName)),
+    ...terminated.map(f => facilityToRow(f, borrowerName, asOf)),
   ];
 }
