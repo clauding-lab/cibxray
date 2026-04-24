@@ -28,7 +28,7 @@ import ParseQualityBanner from './components/report/ParseQualityBanner.jsx';
 import InfoModal from './components/info/InfoModal.jsx';
 import HowItWorks from './components/info/HowItWorks.jsx';
 import Security from './components/info/Security.jsx';
-import { stripForPrint, clearPrintPayload, PRINT_PAYLOAD_KEY } from '../lib/reportHygiene.js';
+import { stripForPrint, stripForPrintGroup, clearPrintPayload, PRINT_PAYLOAD_KEY } from '../lib/reportHygiene.js';
 
 const getBorrowerFacs = (r) => r.facilities.filter(f => f.role === "Borrower" || f.role === "CoBorrower");
 
@@ -109,34 +109,56 @@ export default function App() {
     // rawText is stripped before serialization so several KB of raw
     // PDF text per facility never hit localStorage. try/finally + the
     // popup-blocker guard ensure we scrub the key on any failure path.
+    // 3-tier quota fallback. localStorage caps at ~5MB/origin; a large
+    // wholesale batch (50+ reports) can exceed this even after stripping.
+    // Try the richest payload first; on QuotaExceededError, drop the
+    // group-table payload (single-report print still works); as last
+    // resort, surface a clear alert.
+    const sanitized = stripForPrint(report);
+    const isMulti = Array.isArray(reports) && reports.length > 1;
+
+    const buildPayload = (includeGroup) => JSON.stringify({
+      writtenAt: Date.now(),
+      report: sanitized,
+      ...(includeGroup && isMulti ? { reports: stripForPrintGroup(reports) } : {}),
+      score,
+      band,
+    });
+
+    const trySet = (payload) => {
+      try {
+        localStorage.setItem(PRINT_PAYLOAD_KEY, payload);
+        return true;
+      } catch (err) {
+        if (err && err.name === 'QuotaExceededError') return false;
+        throw err;
+      }
+    };
+
     try {
-      const sanitized = stripForPrint(report);
-      // Only include the multi-report list in wholesale contexts.
-      // In single-PDF context we'd just be duplicating the sanitized active
-      // report, which doubled the payload size and could trip the ~5MB
-      // localStorage quota on heavy CIBs. PrintReport falls back to
-      // [report] when `reports` is absent, so the single-PDF path stays
-      // correct with this omission.
-      const isMulti = Array.isArray(reports) && reports.length > 1;
-      const payload = JSON.stringify({
-        writtenAt: Date.now(),
-        report: sanitized,
-        ...(isMulti ? { reports: stripForPrint(reports) } : {}),
-        score,
-        band,
-      });
-      localStorage.setItem(PRINT_PAYLOAD_KEY, payload);
+      let ok = trySet(buildPayload(true));
+      if (!ok && isMulti) {
+        // Fallback 1: drop the group-table payload. Applying Concern table
+        // still renders for the active report.
+        ok = trySet(buildPayload(false));
+      }
+      if (!ok) {
+        clearPrintPayload(localStorage);
+        // eslint-disable-next-line no-alert -- surface quota failure to the user
+        alert(
+          'Report is too large to print in this browser. ' +
+          (isMulti
+            ? 'Try printing individual reports one at a time (reduce the batch size), or use a different browser.'
+            : 'Try printing from a different browser.')
+        );
+        return;
+      }
       const win = window.open('/#print', '_blank');
       if (!win) {
         clearPrintPayload(localStorage);
       }
     } catch (err) {
       clearPrintPayload(localStorage);
-      if (err && err.name === 'QuotaExceededError') {
-        // eslint-disable-next-line no-alert -- surface quota failure to the user
-        alert('Report is too large to print in this browser. Try closing other tabs on this site, or print from a different browser.');
-        return;
-      }
       throw err;
     }
   };
