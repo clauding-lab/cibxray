@@ -10,6 +10,7 @@ import { computeStamp } from './stamp/computeStamp.js';
 import { pdfToText } from './parser/pdfToText';
 import { doExport } from './export/excelExport';
 import { doRetailExport } from './export/retailExport';
+import { doWholesaleExport } from './export/wholesaleExport';
 import Gauge from './components/shared/Gauge';
 import FacTable from './components/shared/FacTable';
 import FacSummaryBar from './components/shared/FacSummaryBar';
@@ -49,6 +50,7 @@ export default function App() {
   const [dragOver, setDragOver] = useState(false);
   const [sideOpen, setSideOpen] = useState(window.innerWidth > 768);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [wholesaleError, setWholesaleError] = useState(null);
   const fileRef = useRef();
   const counter = useRef(0);
 
@@ -109,7 +111,11 @@ export default function App() {
     // popup-blocker guard ensure we scrub the key on any failure path.
     try {
       const sanitized = stripRawText(report);
-      const payload = JSON.stringify({ writtenAt: Date.now(), report: sanitized, score, band });
+      // Include the full reports list so PrintReport's Group summary table
+      // can render in multi-PDF (wholesale) contexts. Gated on length > 1
+      // in the consumer — single-PDF print hides the group table.
+      const sanitizedReports = (reports || []).map(stripRawText);
+      const payload = JSON.stringify({ writtenAt: Date.now(), report: sanitized, reports: sanitizedReports, score, band });
       localStorage.setItem(PRINT_PAYLOAD_KEY, payload);
       const win = window.open('/#print', '_blank');
       if (!win) {
@@ -214,6 +220,23 @@ export default function App() {
     setProcessing(false);
   }, [fileLog.length]);
 
+  /**
+   * Trigger wholesale export with non-blocking error handling.
+   * If detectApplyingConcern throws (multiple ref-bases), show banner
+   * instead of crashing.
+   */
+  const handleWholesaleExport = useCallback(async () => {
+    setWholesaleError(null);
+    try {
+      await doWholesaleExport(reports);
+    } catch (err) {
+      const msg = err && err.message && err.message.includes('multiple group ref bases')
+        ? 'Multiple root references detected. Upload one group at a time.'
+        : (err && err.message) || 'Wholesale export failed. Please try again.';
+      setWholesaleError(msg);
+    }
+  }, [reports]);
+
   const tabStyle = (isActive) => ({
     padding: "8px 14px", fontSize: 11.5, fontWeight: isActive ? 600 : 400,
     color: isActive ? "#0c4a6e" : "#64748b", background: isActive ? "#fff" : "transparent",
@@ -236,7 +259,7 @@ export default function App() {
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          {reports.length > 1 && <button onClick={() => doExport(reports, "batch")} style={{ ...S.bo, background: "rgba(14,165,233,0.15)", color: "#7dd3fc", border: "1px solid rgba(56,189,248,0.3)", fontSize: 11 }}>Batch Export ({reports.length})</button>}
+          {reports.length > 1 && <button onClick={handleWholesaleExport} style={{ ...S.bo, background: "rgba(14,165,233,0.15)", color: "#7dd3fc", border: "1px solid rgba(56,189,248,0.3)", fontSize: 11 }}>Batch Export ({reports.length})</button>}
           <button onClick={() => setInfoModal("how")} title="How the App Works" style={{ background: "rgba(14,165,233,0.15)", border: "1px solid rgba(56,189,248,0.3)", color: "#7dd3fc", width: 28, height: 28, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <circle cx="12" cy="12" r="10" />
@@ -819,12 +842,30 @@ export default function App() {
                 {/* EXPORT TAB */}
                 {tab === "export" && (
                   <div style={{ maxWidth: 550, margin: "0 auto" }}>
+                    {/* Retail Lending Analytics */}
                     <div style={{ ...S.card, textAlign: "center", padding: 28 }}>
                       <div style={{ fontSize: 32, marginBottom: 10 }}>{"\u2B07\uFE0F"}</div>
                       <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>Retail Lending Analytics</h3>
                       <p style={{ color: "#64748b", fontSize: 12.5, marginBottom: 20, lineHeight: 1.6 }}>Formatted to match the CRM-CD Dashboard V2 template — 9 sheets, amounts in BDT Million.</p>
                       <button onClick={() => doRetailExport(active)} style={S.bp}>Download Retail Lending Analytics.xlsx</button>
                     </div>
+
+                    {/* Wholesale Lending Analytics — visible only when 2+ reports loaded */}
+                    {reports.length >= 2 && (
+                      <div style={{ ...S.card, textAlign: "center", padding: 28, marginTop: 16 }}>
+                        <div style={{ fontSize: 32, marginBottom: 10 }}>{"\u{1F3DB}"}</div>
+                        <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>Wholesale Lending Analytics</h3>
+                        <p style={{ color: "#64748b", fontSize: 12.5, marginBottom: 8, lineHeight: 1.6 }}>
+                          Formatted to match the CRM-CD Corporate Template — 12 sheets; applying concern auto-detected from filename pattern.
+                        </p>
+                        {wholesaleError && (
+                          <div style={{ background: "#fef3c7", border: "1px solid #f59e0b", borderRadius: 6, padding: "8px 12px", marginBottom: 12, fontSize: 12, color: "#92400e", textAlign: "left" }}>
+                            {wholesaleError}
+                          </div>
+                        )}
+                        <button onClick={handleWholesaleExport} style={S.bp}>Download Wholesale Lending Analytics.xlsx</button>
+                      </div>
+                    )}
 
                     {/* Technical Export — demoted legacy exporter per spec §9 */}
                     <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid #1f2937" }}>
@@ -848,7 +889,7 @@ export default function App() {
                       {reports.length > 1 && (
                         <div style={{ ...S.card, textAlign: "center", padding: 18 }}>
                           <h5 style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, color: "#94a3b8" }}>Batch ({reports.length} reports)</h5>
-                          <button onClick={() => doExport(reports, "batch")} style={{ ...S.bo, fontSize: 11 }}>Download Batch .xlsx</button>
+                          <button onClick={handleWholesaleExport} style={{ ...S.bo, fontSize: 11 }}>Download Batch .xlsx</button>
                         </div>
                       )}
                     </div>
@@ -917,7 +958,7 @@ export default function App() {
                 <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>All Reports</h2>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button onClick={() => { setView("upload"); setActiveId(null); }} style={S.bo}>+ Upload More</button>
-                  {reports.length > 0 && <button onClick={() => doExport(reports, "batch")} style={S.bp}>Batch Export</button>}
+                  {reports.length > 0 && <button onClick={handleWholesaleExport} style={S.bp}>Batch Export</button>}
                 </div>
               </div>
 

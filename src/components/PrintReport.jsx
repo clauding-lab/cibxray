@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import ScoreBlock from './report/ScoreBlock.jsx';
 import BreakdownBars from './report/BreakdownBars.jsx';
-import FacilityTable from './report/FacilityTable.jsx';
 import ParseQualityBanner from './report/ParseQualityBanner.jsx';
 import AuditStamp from './AuditStamp.jsx';
+import LoanSummaryTable from './print/LoanSummaryTable.jsx';
+import { filterCompaniesOnly } from '../analytics/devreq2Analytics.js';
 
 const STORAGE_KEY = 'cibxray.printPayload';
 const STALE_AFTER_MS = 10_000; // payload must have been written within the last 10s
@@ -87,7 +88,12 @@ export default function PrintReport() {
 
   if (!payload) return null;
 
-  const { report, score, band } = payload;
+  const { report, reports, score, band } = payload;
+  // reports may be an array (multi-PDF context) or absent (single-PDF context)
+  const allReports = Array.isArray(reports) ? reports : (report ? [report] : []);
+  const isMultiPdf = allReports.length > 1;
+  const companyReports = filterCompaniesOnly(allReports);
+  const groupFacilities = companyReports.flatMap(r => r.facilities || []);
 
   // report.subject.displayName is the canonical display name used throughout the app
   // report.inquiryDate holds the CIB inquiry/reporting date (no summary.reportingDate field exists)
@@ -117,10 +123,22 @@ export default function PrintReport() {
         <BreakdownBars score={score} band={band} variant="print" />
       </section>
 
-      <section style={{ ...sectionGapStyle, flex: 1 }}>
-        <h2 style={{ fontSize: 13, fontWeight: 600, margin: '0 0 8px 0' }}>Top facilities (by outstanding)</h2>
-        <FacilityTable facilities={report?.facilities ?? []} variant="print" />
+      {/* Applying Concern Summary — always rendered (spec §6, §12 Q4) */}
+      <section style={{ ...sectionGapStyle }}>
+        <h2 style={{ fontSize: 13, fontWeight: 600, margin: '0 0 6px 0' }}>Applying Concern: Liability Summary</h2>
+        <LoanSummaryTable facilities={report?.facilities ?? []} />
       </section>
+
+      {/* Group Summary — only in multi-PDF (wholesale) context (spec §6) */}
+      {isMultiPdf && (
+        <section style={{ ...sectionGapStyle, flex: 1 }}>
+          <h2 style={{ fontSize: 13, fontWeight: 600, margin: '0 0 6px 0' }}>Group: Liability Summary</h2>
+          <LoanSummaryTable
+            facilities={groupFacilities}
+            caption="Here Group CIB includes only the company not individual loans"
+          />
+        </section>
+      )}
 
       <AuditStamp stamp={report?.stamp} />
     </div>
