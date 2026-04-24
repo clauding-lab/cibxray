@@ -28,7 +28,7 @@ import ParseQualityBanner from './components/report/ParseQualityBanner.jsx';
 import InfoModal from './components/info/InfoModal.jsx';
 import HowItWorks from './components/info/HowItWorks.jsx';
 import Security from './components/info/Security.jsx';
-import { stripRawText, clearPrintPayload, PRINT_PAYLOAD_KEY } from '../lib/reportHygiene.js';
+import { stripForPrint, clearPrintPayload, PRINT_PAYLOAD_KEY } from '../lib/reportHygiene.js';
 
 const getBorrowerFacs = (r) => r.facilities.filter(f => f.role === "Borrower" || f.role === "CoBorrower");
 
@@ -110,12 +110,21 @@ export default function App() {
     // PDF text per facility never hit localStorage. try/finally + the
     // popup-blocker guard ensure we scrub the key on any failure path.
     try {
-      const sanitized = stripRawText(report);
-      // Include the full reports list so PrintReport's Group summary table
-      // can render in multi-PDF (wholesale) contexts. Gated on length > 1
-      // in the consumer — single-PDF print hides the group table.
-      const sanitizedReports = (reports || []).map(stripRawText);
-      const payload = JSON.stringify({ writtenAt: Date.now(), report: sanitized, reports: sanitizedReports, score, band });
+      const sanitized = stripForPrint(report);
+      // Only include the multi-report list in wholesale contexts.
+      // In single-PDF context we'd just be duplicating the sanitized active
+      // report, which doubled the payload size and could trip the ~5MB
+      // localStorage quota on heavy CIBs. PrintReport falls back to
+      // [report] when `reports` is absent, so the single-PDF path stays
+      // correct with this omission.
+      const isMulti = Array.isArray(reports) && reports.length > 1;
+      const payload = JSON.stringify({
+        writtenAt: Date.now(),
+        report: sanitized,
+        ...(isMulti ? { reports: stripForPrint(reports) } : {}),
+        score,
+        band,
+      });
       localStorage.setItem(PRINT_PAYLOAD_KEY, payload);
       const win = window.open('/#print', '_blank');
       if (!win) {
@@ -123,6 +132,11 @@ export default function App() {
       }
     } catch (err) {
       clearPrintPayload(localStorage);
+      if (err && err.name === 'QuotaExceededError') {
+        // eslint-disable-next-line no-alert -- surface quota failure to the user
+        alert('Report is too large to print in this browser. Try closing other tabs on this site, or print from a different browser.');
+        return;
+      }
       throw err;
     }
   };
