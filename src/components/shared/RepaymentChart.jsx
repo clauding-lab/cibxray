@@ -114,8 +114,8 @@ export default function RepaymentChart({ facs, title }) {
         <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: 4, background: "#d97706", display: "inline-block" }} /> Classification status (dot color)</span>
       </div>
 
-      <div style={{ position: "relative", width: "100%", overflowX: "auto" }}>
-        <svg width="100%" height={H} viewBox={"0 0 " + W + " " + H} preserveAspectRatio="xMinYMid meet" style={{ display: "block", overflow: "visible", minWidth: 400 }}
+      <div style={{ position: "relative", width: "100%" }}>
+        <svg width="100%" height={H} viewBox={"0 0 " + W + " " + H} preserveAspectRatio="none" style={{ display: "block", overflow: "visible" }}
           onMouseLeave={() => setHover(null)}>
           {yTicks.map((t, i) => (
             <g key={i}>
