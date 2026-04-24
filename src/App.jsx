@@ -11,6 +11,7 @@ import { pdfToText } from './parser/pdfToText';
 import { doExport } from './export/excelExport';
 import { doRetailExport } from './export/retailExport';
 import { doWholesaleExport } from './export/wholesaleExport';
+import { doCommitteeSummaryExport } from './export/committeeSummaryExport';
 import Gauge from './components/shared/Gauge';
 import FacTable from './components/shared/FacTable';
 import FacSummaryBar from './components/shared/FacSummaryBar';
@@ -250,6 +251,18 @@ export default function App() {
       const msg = err && err.message && err.message.includes('multiple group ref bases')
         ? 'Multiple root references detected. Upload one group at a time.'
         : (err && err.message) || 'Wholesale export failed. Please try again.';
+      setWholesaleError(msg);
+    }
+  }, [reports]);
+
+  const handleCommitteeSummaryExport = useCallback(async () => {
+    setWholesaleError(null);
+    try {
+      await doCommitteeSummaryExport(reports);
+    } catch (err) {
+      const msg = err && err.message && err.message.includes('multiple group ref bases')
+        ? 'Multiple root references detected. Upload one group at a time.'
+        : (err && err.message) || 'Committee summary export failed. Please try again.';
       setWholesaleError(msg);
     }
   }, [reports]);
@@ -917,6 +930,14 @@ export default function App() {
                           </div>
                         )}
                         <button onClick={handleWholesaleExport} style={S.bp}>Download Wholesale Lending Analytics.xlsx</button>
+                        <div style={{ marginTop: 10 }}>
+                          <button onClick={handleCommitteeSummaryExport} style={{ ...S.bp, background: "#0f766e" }}>
+                            Download Summary for Credit Committee.docx
+                          </button>
+                          <p style={{ color: "#94a3b8", fontSize: 11, marginTop: 6, lineHeight: 1.5 }}>
+                            One-page Word summary: applying-concern + group liability tables.
+                          </p>
+                        </div>
                       </div>
                     )}
 
