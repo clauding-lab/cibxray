@@ -35,6 +35,24 @@ export function parseBBCIB(text, fileName) {
   };
   const fullText = text;
 
+  // ── DevReq-2.1: report-level stay order rollup ──
+  // Sum across all "SUMMARY OF FACILITY(S)" blocks in the full text.
+  {
+    let soCount = 0;
+    let soOutstanding = 0;
+    const soCountRe = /No of Stay order contracts:\s*(\d+)/gi;
+    const soOutRe = /Total Outstanding amount for Stay Order\s+([\d,]+)/gi;
+    let m;
+    while ((m = soCountRe.exec(fullText)) !== null) {
+      soCount += parseInt(m[1], 10);
+    }
+    while ((m = soOutRe.exec(fullText)) !== null) {
+      soOutstanding += parseInt(m[1].replace(/,/g, ''), 10);
+    }
+    report.stayOrderCount = soCount;
+    report.stayOrderOutstanding = soOutstanding;
+  }
+
   // ── Helper: grab first match from patterns ──
   const grab = (patterns) => {
     for (const p of patterns) {
@@ -279,6 +297,65 @@ export function parseBBCIB(text, fileName) {
       wdRemarks = "Appeal lodged";
     }
 
+    // ── DevReq-2.1: expanded wdRemarks — per-month "Remarks for WD" column ──
+    // The Monthly History table has columns ending with:
+    //   ...Status | Default & Willful Default | Remarks for WD
+    // Most rows: "STD No" (No = default status). Non-No values:
+    //   - "STD No  WD"    — default col is "No", remarks col is "WD"
+    //   - "STD WD"        — the WD token itself signals willful-default remark
+    //   - "STD Yes"       — normalise to "WD"
+    // Strategy: after the classification token, capture everything on the line.
+    // Split by 2+ spaces (multi-column separator in layout output).
+    // The LAST non-empty token is the "Remarks for WD" column.
+    // If that token is "No" or empty, skip; if "Yes"/"WD" → "WD"; else preserve verbatim.
+    {
+      const wdRowRe = /\d{2}\/\d{2}\/\d{4}[\s\d,]+(?:STD|SMA|SS|DF|BL|BLW)\s+([^\n]+)/gi;
+      let wdMatch;
+      let firstNonNoWd = "";
+      if ((wdMatch = wdRowRe.exec(block)) !== null) {
+        const tail = wdMatch[1].trim();
+        // Split on 2+ spaces to get individual column tokens
+        const tailParts = tail.split(/\s{2,}/).map(p => p.trim()).filter(Boolean);
+        // Last token is the "Remarks for WD" column value
+        // (when there's only one token, it is the Default status — also check it)
+        const lastToken = tailParts[tailParts.length - 1] || "";
+        if (lastToken && lastToken !== "No") {
+          firstNonNoWd = /^(Yes|WD)$/i.test(lastToken) ? "WD" : lastToken;
+        }
+      }
+      if (firstNonNoWd) {
+        if (wdRemarks === "Appeal lodged") {
+          wdRemarks = "Appeal lodged (" + firstNonNoWd + ")";
+        } else {
+          wdRemarks = firstNonNoWd;
+        }
+      }
+    }
+
+    // ── DevReq-2.1: classificationBasis ──
+    // Observed real CIB layout (from sample recon):
+    //   "Basis for\nclassification:qualitative\njudgment:"
+    // or on a single line: "Basis for classification:qualitative judgment"
+    // The value follows the colon immediately (no space), ends at ":" (trailing colon),
+    // newline, or multi-space gap.
+    let classificationBasis = "";
+    {
+      // Match "Basis for" then up to 120 chars spanning up to 3 lines, capture value after ":"
+      const bfMatch = block.match(
+        /Basis for[\s\r\n]+classification:([\s\S]{0,80}?)(?::\s*[\r\n]|:\s*(?=\n|Third Party|Security Type|Remarks:|\s{3})|[\r\n]{2}|$)/i
+      );
+      if (bfMatch) {
+        classificationBasis = bfMatch[1].replace(/\s+/g, " ").trim()
+          // remove trailing colon artefact if any
+          .replace(/:$/, "").trim();
+      }
+    }
+
+    // ── DevReq-2.1: stayOrder (per-facility) ──
+    // True if the contract identifier line contains a leading * before the code.
+    // The contract block header looks like: "### ### *T9876543 ###" or "### ### T1234567 ###"
+    const stayOrder = /###\s+###\s+\*[A-Z0-9]/.test(block);
+
     const lawsuitMatch = block.match(/Date of Law suit:\s*(\d{2}\/\d{2}\/\d{4})/);
     const lawsuit = lawsuitMatch ? lawsuitMatch[1] : "";
 
@@ -420,6 +497,9 @@ export function parseBBCIB(text, fileName) {
       remainingInstallmentsCount,
       paymentPeriodicity,
       isForeign,
+      // ── DevReq-2.1 additions ──
+      classificationBasis,
+      stayOrder,
     });
   }
 
