@@ -3,6 +3,7 @@ import { CLS } from './constants/classifications';
 import { BANDS, getBand } from './constants/bands';
 import { S } from './constants/theme';
 import { fmt } from './utils/format';
+import { formatMultiBaseMessage } from './utils/wholesaleErrorMessage';
 import { calcScore } from './scoring/calcScore';
 import { parseBBCIB } from './parser/parseBBCIB';
 import { assessParseQuality } from './parser/parseQuality';
@@ -249,8 +250,8 @@ export default function App() {
     try {
       await doWholesaleExport(reports);
     } catch (err) {
-      const msg = err && err.message && err.message.includes('multiple group ref bases')
-        ? 'Multiple root references detected. Upload one group at a time.'
+      const msg = Array.isArray(err && err.bases) && err.bases.length > 1
+        ? formatMultiBaseMessage(err.bases)
         : (err && err.message) || 'Wholesale export failed. Please try again.';
       setWholesaleError(msg);
     }
@@ -261,8 +262,8 @@ export default function App() {
     try {
       await doCommitteeSummaryExport(reports);
     } catch (err) {
-      const msg = err && err.message && err.message.includes('multiple group ref bases')
-        ? 'Multiple root references detected. Upload one group at a time.'
+      const msg = Array.isArray(err && err.bases) && err.bases.length > 1
+        ? formatMultiBaseMessage(err.bases)
         : (err && err.message) || 'Committee summary export failed. Please try again.';
       setWholesaleError(msg);
     }
