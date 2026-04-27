@@ -586,10 +586,22 @@ export function detectApplyingConcern(reports) {
   // All distinct ref-bases across every report (bare + suffix-bearing)
   const allDistinctBases = new Set(parsed.map(p => p.refBase));
   if (allDistinctBases.size > 1) {
-    throw new Error(
+    // Build a per-base count map, preserving insertion order (first-seen)
+    const baseCountMap = new Map();
+    for (const p of parsed) {
+      baseCountMap.set(p.refBase, (baseCountMap.get(p.refBase) || 0) + 1);
+    }
+    // Sort by descending count; ties keep first-seen order (Map preserves insertion order)
+    const bases = [...baseCountMap.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([base, count]) => ({ base, count }));
+
+    const err = new Error(
       `detectApplyingConcern: ambiguous upload — multiple group ref bases detected ` +
       `(${[...allDistinctBases].join(', ')}). Upload one group at a time.`
     );
+    err.bases = bases;
+    throw err;
   }
 
   // Find reports with no suffix-index (bare base)
