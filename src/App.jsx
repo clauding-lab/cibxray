@@ -483,7 +483,6 @@ export default function App() {
               f.rescheduled || f.reorganized || f.lawsuit ||
               ["SS", "DF", "BL", "BLW"].includes(f.classification) ||
               (f.classification === "SMA" && f.status === "Live") ||
-              (f.classificationBasis && /qualitative judgment/i.test(f.classificationBasis)) ||
               f.stayOrder ||
               (f.wdRemarks && !(f.willfulDefault || f.defaultStatus === "WD"))
             );
@@ -778,7 +777,6 @@ export default function App() {
 
                       const hasExpired = reportFlags.some(f => f.label === "Expired CIB Report");
                       const hasUnverified = reportFlags.some(f => f.label === "Unverified Name/NID");
-                      const qualJudgFacs = allFacs.filter(f => f.classificationBasis && /qualitative judgment/i.test(f.classificationBasis));
                       const stayOrderFacs = allFacs.filter(f => f.stayOrder);
                       const wdRemarkFacs = allFacs.filter(f => f.wdRemarks && !(f.willfulDefault || f.defaultStatus === "WD"));
                       const counters = [
@@ -791,7 +789,6 @@ export default function App() {
                         { label: "Adverse (SS/DF/BL)", count: advClass.length, color: "#dc2626", icon: "✗" },
                         { label: "Expired CIB", count: hasExpired ? 1 : 0, color: "#d97706", icon: "⏰" },
                         { label: "Unverified ID", count: hasUnverified ? 1 : 0, color: "#d97706", icon: "⚠" },
-                        { label: "Qualitative Judgment", count: qualJudgFacs.length, color: "#dc2626", icon: "⚖" },
                         { label: "Stay Order", count: stayOrderFacs.length, color: "#991b1b", icon: "⛔" },
                         { label: "WD Remarks", count: wdRemarkFacs.length, color: "#dc2626", icon: "✍" },
                       ];
@@ -833,7 +830,6 @@ export default function App() {
                                 if (f.lawsuit) reasons.push({ text: "Lawsuit filed: " + f.lawsuit, severity: "critical" });
                                 if (["SS", "DF", "BL", "BLW"].includes(f.classification)) reasons.push({ text: "Classification: " + (CLS[f.classification]?.label || f.classification), severity: "high" });
                                 if (f.classification === "SMA" && f.status === "Live") reasons.push({ text: "Live SMA classification", severity: "medium" });
-                                if (f.classificationBasis && /qualitative judgment/i.test(f.classificationBasis)) reasons.push({ text: "Qualitative-judgment classification", severity: "high" });
                                 if (f.stayOrder) reasons.push({ text: "Stay Order on facility", severity: "critical" });
                                 if (f.wdRemarks && !(f.willfulDefault || f.defaultStatus === "WD")) reasons.push({ text: "WD remark: " + f.wdRemarks, severity: "high" });
                                 const worstSev = reasons.some(r => r.severity === "critical") ? "critical" : reasons.some(r => r.severity === "high") ? "high" : "medium";
@@ -1181,7 +1177,6 @@ export default function App() {
                     if (f.lawsuit) reasons.push({ text: "Lawsuit filed: " + f.lawsuit, severity: "critical" });
                     if (["SS", "DF", "BL", "BLW"].includes(f.classification)) reasons.push({ text: "Classification: " + (CLS[f.classification]?.label || f.classification), severity: "high" });
                     if (f.classification === "SMA" && f.status === "Live") reasons.push({ text: "Live SMA classification", severity: "medium" });
-                    if (f.classificationBasis && /qualitative judgment/i.test(f.classificationBasis)) reasons.push({ text: "Qualitative-judgment classification", severity: "high" });
                     if (f.stayOrder) reasons.push({ text: "Stay Order on facility", severity: "critical" });
                     if (f.wdRemarks && !(f.willfulDefault || f.defaultStatus === "WD")) reasons.push({ text: "WD remark: " + f.wdRemarks, severity: "high" });
                     if (reasons.length > 0) allReportFlags.push({ f, reasons, rpt });
