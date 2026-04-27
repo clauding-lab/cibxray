@@ -4,6 +4,7 @@ import { BANDS, getBand } from './constants/bands';
 import { S } from './constants/theme';
 import { fmt } from './utils/format';
 import { formatMultiBaseMessage } from './utils/wholesaleErrorMessage';
+import { detectApplyingConcern } from './analytics/devreq2Analytics';
 import { calcScore } from './scoring/calcScore';
 import { parseBBCIB } from './parser/parseBBCIB';
 import { assessParseQuality } from './parser/parseQuality';
@@ -53,7 +54,18 @@ export default function App() {
   const [dragOver, setDragOver] = useState(false);
   const [sideOpen, setSideOpen] = useState(window.innerWidth > 768);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  const [wholesaleError, setWholesaleError] = useState(null);
+  const multiBaseError = useMemo(() => {
+    if (reports.length < 2) return null;
+    try {
+      detectApplyingConcern(reports);
+      return null;
+    } catch (err) {
+      if (Array.isArray(err && err.bases) && err.bases.length > 1) {
+        return formatMultiBaseMessage(err.bases);
+      }
+      return null;
+    }
+  }, [reports]);
   const fileRef = useRef();
   const counter = useRef(0);
 
@@ -246,28 +258,22 @@ export default function App() {
    * instead of crashing.
    */
   const handleWholesaleExport = useCallback(async () => {
-    setWholesaleError(null);
+    if (multiBaseError) return; // defense in depth — button should already be disabled
     try {
       await doWholesaleExport(reports);
     } catch (err) {
-      const msg = Array.isArray(err && err.bases) && err.bases.length > 1
-        ? formatMultiBaseMessage(err.bases)
-        : (err && err.message) || 'Wholesale export failed. Please try again.';
-      setWholesaleError(msg);
+      alert((err && err.message) || 'Wholesale export failed. Please try again.');
     }
-  }, [reports]);
+  }, [reports, multiBaseError]);
 
   const handleCommitteeSummaryExport = useCallback(async () => {
-    setWholesaleError(null);
+    if (multiBaseError) return; // defense in depth — button should already be disabled
     try {
       await doCommitteeSummaryExport(reports);
     } catch (err) {
-      const msg = Array.isArray(err && err.bases) && err.bases.length > 1
-        ? formatMultiBaseMessage(err.bases)
-        : (err && err.message) || 'Committee summary export failed. Please try again.';
-      setWholesaleError(msg);
+      alert((err && err.message) || 'Committee summary export failed. Please try again.');
     }
-  }, [reports]);
+  }, [reports, multiBaseError]);
 
   const tabStyle = (isActive) => ({
     padding: "8px 14px", fontSize: 11.5, fontWeight: isActive ? 600 : 400,
@@ -291,7 +297,7 @@ export default function App() {
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          {reports.length > 1 && <button onClick={handleWholesaleExport} title="Batch Export — download the Wholesale Lending Analytics workbook (12 sheets) for all loaded reports" style={{ ...S.bo, background: "rgba(14,165,233,0.15)", color: "#7dd3fc", border: "1px solid rgba(56,189,248,0.3)", fontSize: 11 }}>Batch Export ({reports.length})</button>}
+          {reports.length > 1 && <button onClick={handleWholesaleExport} disabled={!!multiBaseError} title={`Batch Export — download the Wholesale Lending Analytics workbook (12 sheets) for all loaded reports${multiBaseError ? ' — disabled while multiple ref bases are detected' : ''}`} style={{ ...S.bo, background: multiBaseError ? "#94a3b8" : "rgba(14,165,233,0.15)", color: multiBaseError ? "#fff" : "#7dd3fc", border: multiBaseError ? "1px solid #94a3b8" : "1px solid rgba(56,189,248,0.3)", fontSize: 11, cursor: multiBaseError ? "not-allowed" : "pointer", opacity: multiBaseError ? 0.7 : 1 }}>Batch Export ({reports.length})</button>}
           <button onClick={() => setInfoModal("how")} title="How the App Works — overview of the parse, score, and export pipeline" style={{ background: "rgba(14,165,233,0.15)", border: "1px solid rgba(56,189,248,0.3)", color: "#7dd3fc", width: 28, height: 28, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <circle cx="12" cy="12" r="10" />
@@ -928,14 +934,14 @@ export default function App() {
                       <div style={{ ...S.card, textAlign: "center", padding: 28, marginTop: 16 }}>
                         <div style={{ fontSize: 32, marginBottom: 10 }}>{"\u{1F3DB}"}</div>
                         <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 14 }}>Wholesale Lending Analytics</h3>
-                        {wholesaleError && (
+                        {multiBaseError && (
                           <div style={{ background: "#fef3c7", border: "1px solid #f59e0b", borderRadius: 6, padding: "8px 12px", marginBottom: 12, fontSize: 12, color: "#92400e", textAlign: "left" }}>
-                            {wholesaleError}
+                            {multiBaseError}
                           </div>
                         )}
-                        <button onClick={handleWholesaleExport} style={S.bp}>Download Wholesale Lending Analytics.xlsx</button>
+                        <button onClick={handleWholesaleExport} disabled={!!multiBaseError} title={`Download Wholesale Lending Analytics workbook${multiBaseError ? ' — disabled while multiple ref bases are detected' : ''}`} style={{ ...S.bp, ...(multiBaseError ? { background: "#94a3b8", cursor: "not-allowed", opacity: 0.7 } : {}) }}>Download Wholesale Lending Analytics.xlsx</button>
                         <div style={{ marginTop: 10 }}>
-                          <button onClick={handleCommitteeSummaryExport} style={{ ...S.bp, background: "#0f766e" }}>
+                          <button onClick={handleCommitteeSummaryExport} disabled={!!multiBaseError} title={`Download Summary for Credit Committee${multiBaseError ? ' — disabled while multiple ref bases are detected' : ''}`} style={{ ...S.bp, background: multiBaseError ? "#94a3b8" : "#0f766e", cursor: multiBaseError ? "not-allowed" : "pointer", opacity: multiBaseError ? 0.7 : 1 }}>
                             Download Summary for Credit Committee.docx
                           </button>
                         </div>
@@ -964,7 +970,7 @@ export default function App() {
                       {reports.length > 1 && (
                         <div style={{ ...S.card, textAlign: "center", padding: 18 }}>
                           <h5 style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, color: "#94a3b8" }}>Batch ({reports.length} reports)</h5>
-                          <button onClick={handleWholesaleExport} style={{ ...S.bo, fontSize: 11 }}>Download Batch .xlsx</button>
+                          <button onClick={handleWholesaleExport} disabled={!!multiBaseError} title={`Download batch wholesale export${multiBaseError ? ' — disabled while multiple ref bases are detected' : ''}`} style={{ ...S.bo, fontSize: 11, ...(multiBaseError ? { background: "#94a3b8", color: "#fff", border: "1px solid #94a3b8", cursor: "not-allowed", opacity: 0.7 } : {}) }}>Download Batch .xlsx</button>
                         </div>
                       )}
                     </div>
@@ -1033,7 +1039,7 @@ export default function App() {
                 <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>All Reports</h2>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button onClick={() => { setView("upload"); setActiveId(null); }} style={S.bo}>+ Upload More</button>
-                  {reports.length > 0 && <button onClick={handleWholesaleExport} style={S.bp}>Batch Export</button>}
+                  {reports.length > 0 && <button onClick={handleWholesaleExport} disabled={!!multiBaseError} title={`Batch Export — download the Wholesale Lending Analytics workbook${multiBaseError ? ' — disabled while multiple ref bases are detected' : ''}`} style={{ ...S.bp, ...(multiBaseError ? { background: "#94a3b8", cursor: "not-allowed", opacity: 0.7 } : {}) }}>Batch Export</button>}
                 </div>
               </div>
 
