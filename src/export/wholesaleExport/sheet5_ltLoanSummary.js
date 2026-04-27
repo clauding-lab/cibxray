@@ -55,7 +55,7 @@ export function buildLtLoanSummaryRows(reports) {
     'Date of Highest Amount Overdue',
     'Worst Status (Previous)',
     'Number of Rescheduling Instances',
-    'Remarks for WD',  // stubbed — WD remark parser is DevReq-2.1
+    'Remarks for WD',  // DevReq-2.1: wired from parser wdRemarks field
   ];
 
   const dataRows = [];
@@ -96,7 +96,7 @@ export function buildLtLoanSummaryRows(reports) {
         rollup.highestOverdueDate,
         rollup.worstStatus,
         f.rescheduledCount || 0,
-        '',  // Remarks for WD — stubbed per spec §3a / DevReq-2.1
+        f.wdRemarks || '',  // DevReq-2.1: wired from parser
       ]);
     }
   }

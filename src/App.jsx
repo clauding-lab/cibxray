@@ -482,7 +482,9 @@ export default function App() {
               f.defaultStatus === "Yes" || f.defaultStatus === "WD" || f.willfulDefault ||
               f.rescheduled || f.reorganized || f.lawsuit ||
               ["SS", "DF", "BL", "BLW"].includes(f.classification) ||
-              (f.classification === "SMA" && f.status === "Live")
+              (f.classification === "SMA" && f.status === "Live") ||
+              f.stayOrder ||
+              (f.wdRemarks && !(f.willfulDefault || f.defaultStatus === "WD"))
             );
 
             // Report-level red flags
@@ -775,18 +777,21 @@ export default function App() {
 
                       const hasExpired = reportFlags.some(f => f.label === "Expired CIB Report");
                       const hasUnverified = reportFlags.some(f => f.label === "Unverified Name/NID");
+                      const stayOrderFacs = allFacs.filter(f => f.stayOrder);
+                      const wdRemarkFacs = allFacs.filter(f => f.wdRemarks && !(f.willfulDefault || f.defaultStatus === "WD"));
                       const counters = [
-                        { label: "Defaulter", count: defaults.length, color: "#dc2626", icon: "\u26D4" },
-                        { label: "Willful Default", count: willful.length, color: "#991b1b", icon: "\u2620" },
-                        { label: "Rescheduled", count: reschedFacs.length, sub: totalReschedCount > 0 ? totalReschedCount + "x total" : "", color: "#d97706", icon: "\u21BB" },
-                        { label: "Reorganized", count: reorgFacs.length, color: "#d97706", icon: "\u267B" },
-                        { label: "Lawsuit", count: lawsuitFacs.length, color: "#991b1b", icon: "\u2696" },
-                        { label: "Live SMA", count: smaLive.length, color: "#d97706", icon: "\u26A0" },
-                        { label: "Adverse (SS/DF/BL)", count: advClass.length, color: "#dc2626", icon: "\u2717" },
-                        { label: "Expired CIB", count: hasExpired ? 1 : 0, color: "#d97706", icon: "\u23F0" },
-                        { label: "Unverified ID", count: hasUnverified ? 1 : 0, color: "#d97706", icon: "\u26A0" },
+                        { label: "Defaulter", count: defaults.length, color: "#dc2626", icon: "⛔" },
+                        { label: "Willful Default", count: willful.length, color: "#991b1b", icon: "☠" },
+                        { label: "Rescheduled", count: reschedFacs.length, sub: totalReschedCount > 0 ? totalReschedCount + "x total" : "", color: "#d97706", icon: "↻" },
+                        { label: "Reorganized", count: reorgFacs.length, color: "#d97706", icon: "♻" },
+                        { label: "Lawsuit", count: lawsuitFacs.length, color: "#991b1b", icon: "⚖" },
+                        { label: "Live SMA", count: smaLive.length, color: "#d97706", icon: "⚠" },
+                        { label: "Adverse (SS/DF/BL)", count: advClass.length, color: "#dc2626", icon: "✗" },
+                        { label: "Expired CIB", count: hasExpired ? 1 : 0, color: "#d97706", icon: "⏰" },
+                        { label: "Unverified ID", count: hasUnverified ? 1 : 0, color: "#d97706", icon: "⚠" },
+                        { label: "Stay Order", count: stayOrderFacs.length, color: "#991b1b", icon: "⛔" },
+                        { label: "WD Remarks", count: wdRemarkFacs.length, color: "#dc2626", icon: "✍" },
                       ];
-
                       return (
                         <>
                           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 10, marginBottom: 16 }}>
@@ -825,6 +830,8 @@ export default function App() {
                                 if (f.lawsuit) reasons.push({ text: "Lawsuit filed: " + f.lawsuit, severity: "critical" });
                                 if (["SS", "DF", "BL", "BLW"].includes(f.classification)) reasons.push({ text: "Classification: " + (CLS[f.classification]?.label || f.classification), severity: "high" });
                                 if (f.classification === "SMA" && f.status === "Live") reasons.push({ text: "Live SMA classification", severity: "medium" });
+                                if (f.stayOrder) reasons.push({ text: "Stay Order on facility", severity: "critical" });
+                                if (f.wdRemarks && !(f.willfulDefault || f.defaultStatus === "WD")) reasons.push({ text: "WD remark: " + f.wdRemarks, severity: "high" });
                                 const worstSev = reasons.some(r => r.severity === "critical") ? "critical" : reasons.some(r => r.severity === "high") ? "high" : "medium";
                                 const sevColors = { critical: { bg: "#fecaca", border: "#991b1b", text: "#991b1b" }, high: { bg: "#fee2e2", border: "#dc2626", text: "#dc2626" }, medium: { bg: "#fffbeb", border: "#d97706", text: "#d97706" } };
                                 const sc = sevColors[worstSev];
@@ -843,6 +850,14 @@ export default function App() {
                                       <div><span style={{ color: "#94a3b8" }}>O/S: </span><span style={{ fontWeight: 600 }}>{"\u09F3"}{fmt(f.outstanding)}</span></div>
                                       <div><span style={{ color: "#94a3b8" }}>Overdue: </span><span style={{ fontWeight: 600, color: f.overdue > 0 ? "#dc2626" : "#059669" }}>{"\u09F3"}{fmt(f.overdue)}</span></div>
                                       <div><span style={{ color: "#94a3b8" }}>Period: </span><span style={{ fontWeight: 500 }}>{f.startDate || "?"} {"\u2192"} {f.endDate || "?"}</span></div>
+                                    </div>
+                                    <div style={{ fontSize: 10, color: "#94a3b8", fontFamily: "monospace", marginTop: 4, marginBottom: 6, lineHeight: 1.5 }}>
+                                      {[
+                                        active.subject.cibSubjectCode && ("CIB: " + active.subject.cibSubjectCode),
+                                        active.subject.cibSubjectCode && ("Subject: " + active.subject.cibSubjectCode),
+                                        f.pageNo != null && ("Page: " + f.pageNo),
+                                        active.subject.displayName && ("Borrower: " + active.subject.displayName),
+                                      ].filter(Boolean).join(" · ")}
                                     </div>
                                     <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                                       {reasons.map((r, j) => (
@@ -1147,6 +1162,80 @@ export default function App() {
                   </div>
                 </>
               )}
+
+              {/* CROSS-CIB RED FLAGS ROLLUP */}
+              {reports.length > 0 && (() => {
+                const allReportFlags = [];
+                reports.forEach(rpt => {
+                  const facs = rpt.facilities || [];
+                  facs.forEach(f => {
+                    const reasons = [];
+                    if (f.defaultStatus === "Yes") reasons.push({ text: "Defaulter (not Willful)", severity: "high" });
+                    if (f.willfulDefault || f.defaultStatus === "WD") reasons.push({ text: "WILLFUL DEFAULTER" + (f.wdRemarks ? " \u2014 " + f.wdRemarks : ""), severity: "critical" });
+                    if (f.rescheduled) reasons.push({ text: "Rescheduled " + f.rescheduledCount + " time(s)", severity: "medium" });
+                    if (f.reorganized) reasons.push({ text: "Reorganized credit", severity: "medium" });
+                    if (f.lawsuit) reasons.push({ text: "Lawsuit filed: " + f.lawsuit, severity: "critical" });
+                    if (["SS", "DF", "BL", "BLW"].includes(f.classification)) reasons.push({ text: "Classification: " + (CLS[f.classification]?.label || f.classification), severity: "high" });
+                    if (f.classification === "SMA" && f.status === "Live") reasons.push({ text: "Live SMA classification", severity: "medium" });
+                    if (f.stayOrder) reasons.push({ text: "Stay Order on facility", severity: "critical" });
+                    if (f.wdRemarks && !(f.willfulDefault || f.defaultStatus === "WD")) reasons.push({ text: "WD remark: " + f.wdRemarks, severity: "high" });
+                    if (reasons.length > 0) allReportFlags.push({ f, reasons, rpt });
+                  });
+                });
+                if (allReportFlags.length === 0) return null;
+                const crossCounters = [
+                  { label: "Flagged", count: allReportFlags.length, color: "#dc2626", icon: "\u26D4" },
+                  { label: "Critical", count: allReportFlags.filter(x => x.reasons.some(r => r.severity === "critical")).length, color: "#991b1b", icon: "\u2620" },
+                  { label: "High", count: allReportFlags.filter(x => x.reasons.some(r => r.severity === "high") && !x.reasons.some(r => r.severity === "critical")).length, color: "#dc2626", icon: "\u2717" },
+                  { label: "Reports", count: [...new Set(allReportFlags.map(x => x.rpt.reportNo))].length, color: "#d97706", icon: "\u26A0" },
+                ];
+                const sevColors = { critical: { bg: "#fecaca", border: "#991b1b", text: "#991b1b" }, high: { bg: "#fee2e2", border: "#dc2626", text: "#dc2626" }, medium: { bg: "#fffbeb", border: "#d97706", text: "#d97706" } };
+                return (
+                  <div style={S.card}>
+                    <div style={{ ...S.sec, color: "#dc2626" }}>\u26D4 Flagged Facilities (across {reports.length} reports)</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: 8, marginBottom: 14 }}>
+                      {crossCounters.map(c => (
+                        <div key={c.label} style={{ background: c.count > 0 ? "#fef2f2" : "#fff", borderRadius: 8, padding: "10px 12px", border: "1px solid " + (c.count > 0 ? c.color + "30" : "#e2e8f0"), textAlign: "center" }}>
+                          <div style={{ fontSize: 16, marginBottom: 2 }}>{c.icon}</div>
+                          <div style={{ fontSize: 18, fontWeight: 700, color: c.count > 0 ? c.color : "#94a3b8" }}>{c.count}</div>
+                          <div style={{ fontSize: 9.5, fontWeight: 600, color: c.count > 0 ? c.color : "#94a3b8", marginTop: 1 }}>{c.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                    {allReportFlags.map(({ f, reasons, rpt }, i) => {
+                      const worstSev = reasons.some(r => r.severity === "critical") ? "critical" : reasons.some(r => r.severity === "high") ? "high" : "medium";
+                      const sc = sevColors[worstSev];
+                      return (
+                        <div key={i} style={{ background: sc.bg, border: "1px solid " + sc.border + "30", borderRadius: 8, padding: "12px 16px", marginBottom: 10 }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 }}>
+                            <div>
+                              <div style={{ fontWeight: 700, fontSize: 13, color: "#0f172a" }}>{f.type}</div>
+                              <div style={{ fontSize: 11, color: "#64748b", marginTop: 1 }}>{f.contractCode ? f.contractCode + " | " : ""}{f.institution} | {f.role} | {f.status}</div>
+                            </div>
+                            <span style={{ background: (CLS[f.classification] || CLS.STD).bg, color: (CLS[f.classification] || CLS.STD).color, padding: "2px 8px", borderRadius: 4, fontSize: 10.5, fontWeight: 600 }}>{f.classification}</span>
+                          </div>
+                          <div style={{ fontSize: 10, color: "#94a3b8", fontFamily: "monospace", marginBottom: 6, lineHeight: 1.5 }}>
+                            {[rpt.subject.cibSubjectCode && ("CIB: " + rpt.subject.cibSubjectCode), rpt.subject.cibSubjectCode && ("Subject: " + rpt.subject.cibSubjectCode), f.pageNo != null && ("Page: " + f.pageNo), rpt.subject.displayName && ("Borrower: " + rpt.subject.displayName)].filter(Boolean).join(" \u00B7 ")}
+                          </div>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8, marginBottom: 6, fontSize: 11 }}>
+                            <div><span style={{ color: "#94a3b8" }}>Limit: </span><span style={{ fontWeight: 600 }}>\u09F3{fmt(f.limit)}</span></div>
+                            <div><span style={{ color: "#94a3b8" }}>O/S: </span><span style={{ fontWeight: 600 }}>\u09F3{fmt(f.outstanding)}</span></div>
+                            <div><span style={{ color: "#94a3b8" }}>Overdue: </span><span style={{ fontWeight: 600, color: f.overdue > 0 ? "#dc2626" : "#059669" }}>\u09F3{fmt(f.overdue)}</span></div>
+                            <div><span style={{ color: "#94a3b8" }}>File: </span><span style={{ fontWeight: 500, fontSize: 10 }}>{rpt.reportNo}</span></div>
+                          </div>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                            {reasons.map((r, j) => (
+                              <span key={j} style={{ background: sevColors[r.severity].border + "18", color: sevColors[r.severity].text, fontSize: 10.5, fontWeight: 600, padding: "3px 10px", borderRadius: 4, border: "1px solid " + sevColors[r.severity].border + "30" }}>
+                                {r.severity === "critical" ? "\u26D4 " : r.severity === "high" ? "\u2717 " : "\u26A0 "}{r.text}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
 
               {reports.length === 0 && fileLog.length === 0 && (
                 <div style={{ ...S.card, textAlign: "center", padding: 40 }}>
