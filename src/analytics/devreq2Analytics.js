@@ -544,10 +544,13 @@ export function computePercentOfConcernSTF(facility, report) {
 /**
  * Detect the Applying Concern from a list of loaded reports.
  * Rule (spec §2, §5):
- *   1. Parse each fileName against /^(\d+)(-\d+)?(\s.*)?(\.pdf)?$/i
- *   2. Report with no hyphen-index → applying concern
- *   3. No bare base → fallback to smallest hyphen-index
- *   4. Multiple bare bases → throw error
+ *   1. Extract refBase from fileName via digit-extraction (longest digit run ≥10 chars).
+ *      Strip trailing .pdf (case-insensitive, repeated) before scanning. If no digit
+ *      run ≥10 exists, use the cleaned filename as-is (unparseable → own base).
+ *      Suffix index comes from [-_](\d+) immediately after the digit run.
+ *   2. Report with no suffix-index → applying concern (bare base).
+ *   3. No bare base → fallback to smallest suffix-index.
+ *   4. Multiple distinct ref-bases across ALL reports (not just bare) → throw error.
  *
  * @param {Array} reports
  * @returns {{ applyingConcern: object, sisterConcerns: Array, groupRefBase: string }}
@@ -557,26 +560,40 @@ export function detectApplyingConcern(reports) {
     throw new Error('detectApplyingConcern: no reports provided');
   }
 
-  const FILENAME_RE = /^(\d+)(-(\d+))?(\s.*)?(\.pdf)?$/i;
-
   const parsed = reports.map(r => {
-    const name = (r.fileName || '').replace(/\.pdf$/i, '');
-    const m = name.match(FILENAME_RE);
-    const refBase = m ? m[1] : name;
-    const suffixIndex = m && m[3] ? parseInt(m[3]) : null;
-    return { report: r, refBase, suffixIndex };
+    // Strip all trailing .pdf extensions (handles accidental double extensions)
+    let name = r.fileName || '';
+    while (/\.pdf$/i.test(name)) {
+      name = name.replace(/\.pdf$/i, '');
+    }
+
+    // Find the longest run of digits ≥10 characters in the cleaned name
+    const digitRuns = name.match(/\d{10,}/g);
+    if (digitRuns) {
+      const longest = digitRuns.reduce((a, b) => (b.length > a.length ? b : a));
+      const pos = name.lastIndexOf(longest);
+      const tail = name.slice(pos + longest.length);
+      // Suffix: [-_] followed by digits immediately after the ref-base run
+      const suffixMatch = tail.match(/^[-_](\d+)/);
+      const suffixIndex = suffixMatch ? parseInt(suffixMatch[1]) : null;
+      return { report: r, refBase: longest, suffixIndex };
+    }
+
+    // Fallback: unparseable filename — treat entire cleaned name as its own base
+    return { report: r, refBase: name, suffixIndex: null };
   });
 
-  // Find reports with no hyphen-suffix (bare base)
-  const bareReports = parsed.filter(p => p.suffixIndex === null);
-
-  // Multiple distinct ref-bases with no suffix = multiple groups (ambiguous)
-  const distinctBases = new Set(bareReports.map(p => p.refBase));
-  if (distinctBases.size > 1) {
+  // All distinct ref-bases across every report (bare + suffix-bearing)
+  const allDistinctBases = new Set(parsed.map(p => p.refBase));
+  if (allDistinctBases.size > 1) {
     throw new Error(
-      `detectApplyingConcern: ambiguous upload — multiple group ref bases detected (${[...distinctBases].join(', ')}). Upload one group at a time.`
+      `detectApplyingConcern: ambiguous upload — multiple group ref bases detected ` +
+      `(${[...allDistinctBases].join(', ')}). Upload one group at a time.`
     );
   }
+
+  // Find reports with no suffix-index (bare base)
+  const bareReports = parsed.filter(p => p.suffixIndex === null);
 
   let applying;
   if (bareReports.length === 1) {
