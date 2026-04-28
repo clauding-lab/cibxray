@@ -539,18 +539,70 @@ export function computePercentOfConcernSTF(facility, report) {
   return ((facility.outstanding || 0) / stfTotal) * 100;
 }
 
+// ── detectApplyingConcern helpers ────────────────────────────────────────────
+
+/**
+ * Return the longest common prefix of an array of strings.
+ * Returns '' when the array is empty or strings share no prefix.
+ *
+ * @param {string[]} strings
+ * @returns {string}
+ */
+function longestCommonPrefix(strings) {
+  if (strings.length === 0) return '';
+  let prefix = strings[0];
+  for (let i = 1; i < strings.length; i++) {
+    while (!strings[i].startsWith(prefix)) {
+      prefix = prefix.slice(0, -1);
+      if (prefix === '') return '';
+    }
+  }
+  return prefix;
+}
+
+/**
+ * Given an array of cleaned filenames (pdf extension already stripped), find a
+ * common ref-base via iterative-trim longest-common-prefix.
+ *
+ * A prefix is "valid" when every tail (cleanedName.slice(prefix.length)) is
+ * either empty or matches ^[-_]\d+$.  The prefix is trimmed from the right one
+ * character at a time until the validity condition is met or the prefix is gone.
+ *
+ * @param {string[]} cleanedNames
+ * @returns {string}  validated common prefix, or '' if none found
+ */
+function findCommonRefBase(cleanedNames) {
+  let prefix = longestCommonPrefix(cleanedNames);
+  while (prefix.length > 0) {
+    const valid = cleanedNames.every(name => {
+      const tail = name.slice(prefix.length);
+      return tail === '' || /^[-_]\d+$/.test(tail);
+    });
+    if (valid) return prefix;
+    prefix = prefix.slice(0, -1);
+  }
+  return '';
+}
+
 // ── detectApplyingConcern ─────────────────────────────────────────────────────
 
 /**
  * Detect the Applying Concern from a list of loaded reports.
  * Rule (spec §2, §5):
- *   1. Extract refBase from fileName via digit-extraction (longest digit run ≥10 chars).
- *      Strip trailing .pdf (case-insensitive, repeated) before scanning. If no digit
- *      run ≥10 exists, use the cleaned filename as-is (unparseable → own base).
- *      Suffix index comes from [-_](\d+) immediately after the digit run.
- *   2. Report with no suffix-index → applying concern (bare base).
- *   3. No bare base → fallback to smallest suffix-index.
- *   4. Multiple distinct ref-bases across ALL reports (not just bare) → throw error.
+ *   1. (Tier 1) Extract refBase from fileName via digit-extraction (longest digit
+ *      run ≥10 chars). Strip trailing .pdf (case-insensitive, repeated) before
+ *      scanning. If no digit run ≥10 exists, use the cleaned filename as-is
+ *      (unparseable → own base). Suffix index comes from [-_](\d+) immediately
+ *      after the digit run.
+ *   2. (Tier 2) If Tier 1 produces multiple distinct bases (e.g. short digit runs
+ *      below the 10-char threshold), attempt a longest-common-prefix fallback.
+ *      The LCP is trimmed iteratively from the right until every tail is either
+ *      empty or matches ^[-_]\d+$. If a valid non-empty prefix is found, parsed
+ *      results are rebuilt from it. Tier 1 results are preserved when they already
+ *      agree (all bases identical).
+ *   3. Report with no suffix-index → applying concern (bare base).
+ *   4. No bare base → fallback to smallest suffix-index.
+ *   5. Multiple distinct ref-bases across ALL reports (not just bare) → throw error.
  *
  * @param {Array} reports
  * @returns {{ applyingConcern: object, sisterConcerns: Array, groupRefBase: string }}
@@ -560,12 +612,17 @@ export function detectApplyingConcern(reports) {
     throw new Error('detectApplyingConcern: no reports provided');
   }
 
-  const parsed = reports.map(r => {
-    // Strip all trailing .pdf extensions (handles accidental double extensions)
+  // Compute cleanedNames in step with parsed so we can reuse them in Tier 2.
+  const cleanedNames = reports.map(r => {
     let name = r.fileName || '';
     while (/\.pdf$/i.test(name)) {
       name = name.replace(/\.pdf$/i, '');
     }
+    return name;
+  });
+
+  let parsed = reports.map((r, i) => {
+    const name = cleanedNames[i];
 
     // Find the longest run of digits ≥10 characters in the cleaned name
     const digitRuns = name.match(/\d{10,}/g);
@@ -582,6 +639,20 @@ export function detectApplyingConcern(reports) {
     // Fallback: unparseable filename — treat entire cleaned name as its own base
     return { report: r, refBase: name, suffixIndex: null };
   });
+
+  // ── Tier 2: longest-common-prefix fallback ──────────────────────────────
+  // Only runs when Tier 1 left us with multiple distinct bases.
+  if (new Set(parsed.map(p => p.refBase)).size > 1) {
+    const commonBase = findCommonRefBase(cleanedNames);
+    if (commonBase !== '') {
+      parsed = reports.map((r, i) => {
+        const tail = cleanedNames[i].slice(commonBase.length);
+        const suffixMatch = tail.match(/^[-_](\d+)$/);
+        const suffixIndex = suffixMatch ? parseInt(suffixMatch[1]) : null;
+        return { report: r, refBase: commonBase, suffixIndex };
+      });
+    }
+  }
 
   // All distinct ref-bases across every report (bare + suffix-bearing)
   const allDistinctBases = new Set(parsed.map(p => p.refBase));
